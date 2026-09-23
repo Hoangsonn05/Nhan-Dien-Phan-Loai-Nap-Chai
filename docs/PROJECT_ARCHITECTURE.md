@@ -48,7 +48,10 @@ Canonical DatasetSample / Annotation records
 Deterministic JSON manifest
         |
         v
-P8 evaluation / P9 training consumers
+Canonical P8 evaluator (matching / metrics / confusion matrix)
+        |
+        v
+P9 training and P10 learned inference consumers
 ```
 
 ## 4. Source of truth
@@ -60,6 +63,8 @@ P8 evaluation / P9 training consumers
 ## 5. Module ownership
 - `config.py`: schema, default values, JSON load/save/validation.
 - `dataset.py`: YOLO discovery, validation, class mapping, leakage audit, statistics and manifest boundary.
+- `evaluation.py`: model-agnostic prediction contract, deterministic one-to-one
+  IoU matching, class-aware metrics and extended confusion matrix.
 - `models.py`: shared algorithm and runtime contracts (`Detection`, `Track`, `CountEvent`, `FramePacket`, `FrameResult`, `RunSummary`).
 - `detector.py`: HSV masking, morphology, contours, geometry filter, classification candidate.
 - `tracker.py`: identity tracking baseline.
@@ -86,5 +91,5 @@ P8 evaluation / P9 training consumers
 - xử lý overlap giữa các dải màu gần nhau;
 - tách tracking identity khỏi color decision;
 - color stabilization qua nhiều frame;
-- đánh giá confusion matrix / accuracy / counting error;
+- đưa HSV baseline và learned prediction sau này qua cùng P8 evaluator;
 - chỉ cân nhắc YOLO/classifier học máy nếu classical baseline không đạt tiêu chí.

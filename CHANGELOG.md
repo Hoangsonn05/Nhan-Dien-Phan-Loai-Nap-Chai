@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased — P8 Evaluation boundary
+
+- Thêm canonical prediction contract dùng class ID và normalized bbox từ P7.
+- Thêm deterministic one-to-one IoU matching, tách localization correspondence khỏi class correctness.
+- Báo cáo TP/FP/FN, per-class/micro/macro metrics và extended confusion matrix có `BACKGROUND`.
+- Undefined metrics dùng `null`; zero-support class không sinh recall giả.
+- Thêm deterministic JSON report, validation và regression/smoke tests trên manifest thật.
+- Defer AP/mAP cho đến khi prediction source có confidence ranking có ý nghĩa.
+
 ## v1.4.0 — P7 Dataset boundary
 
 - Xác nhận dataset thật là Roboflow YOLOv5 object detection với split `train/valid/test`.

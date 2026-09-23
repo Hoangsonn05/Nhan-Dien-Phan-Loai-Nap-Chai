@@ -157,6 +157,28 @@ for sample in dataset.split("train"):
     image_path = dataset.resolve_image("data/dataset/archive", sample)
 ```
 
+## Evaluation boundary P8
+
+`bottle_cap_vision.evaluation` đánh giá mọi prediction source bằng cùng một contract
+canonical: `sample_id`, canonical `class_id`, bbox normalized P7 và `score` optional.
+Evaluator match bbox one-to-one trước khi so class, vì vậy bbox đúng nhưng sai màu
+được giữ là class confusion thay vì bị tách thành localization miss. Confusion matrix
+mở rộng có sentinel `BACKGROUND` cho missed GT và false positive.
+
+```python
+from bottle_cap_vision.dataset import DatasetManifest
+from bottle_cap_vision.evaluation import EvaluationPrediction, evaluate_predictions
+
+manifest = DatasetManifest.load("outputs/dataset_manifest.json")
+predictions: list[EvaluationPrediction] = []  # producer/adapter supplies these
+report = evaluate_predictions(manifest, predictions, split="val", iou_threshold=0.5)
+report.save("outputs/evaluation_report.json")
+```
+
+Metric không xác định được serialize thành JSON `null`; macro average ghi rõ số class
+được include. AP/mAP chưa được tính vì HSV `color_ratio` không phải confidence đã
+calibrate. Evaluator không đọc lại raw YOLO labels, ảnh, tracker hoặc counter.
+
 ## Known baseline limitation
 
 Color classification chưa phải phiên bản calibration cuối. Một số dải HSV starter có thể chồng lấn ở các cặp gần nhau như Red/Pink, Purple/Lilac hoặc Orange/Brown. Đây là phần chủ động để lại cho giai đoạn **single-image color calibration** bằng dataset thật; không nên "fix" bằng hardcode dựa trên một ảnh mẫu duy nhất.

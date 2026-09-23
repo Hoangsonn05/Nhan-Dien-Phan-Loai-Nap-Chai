@@ -35,10 +35,18 @@ Split vật lý hiện có là `train`, `valid`, `test`; Dataset Layer map expli
 - E5: chỉ khi baseline chưa đạt yêu cầu, đánh giá learned detector/classifier.
 
 ## Metrics
-- color classification accuracy;
-- macro-F1 / per-class recall nếu phù hợp;
-- confusion matrix;
-- detection success / false positive / false negative;
+- P8 dùng `EvaluationPrediction(sample_id, class_id, bbox, score?)` với bbox normalized
+  cùng semantics P7; score optional chỉ là metadata finite, không tự coi `color_ratio`
+  là probability;
+- localization match one-to-one bằng greedy IoU giảm dần (mặc định 0.5), rồi mới
+  so class; bbox đúng nhưng sai class tạo confusion, FN cho GT class và FP cho
+  predicted class;
+- precision/recall không xác định được biểu diễn bằng `null`; F1 chỉ có khi cả
+  precision và recall được định nghĩa; macro average bỏ qua riêng các metric
+  `null` và report số class được include;
+- confusion matrix mở rộng dùng GT rows, prediction columns và `BACKGROUND` để
+  biểu diễn missed GT / unmatched prediction;
+- AP/mAP defer cho đến khi prediction source có ranking confidence có ý nghĩa;
 - total count accuracy;
 - count error by color;
 - processing time / FPS.
