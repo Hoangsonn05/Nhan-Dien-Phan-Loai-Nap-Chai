@@ -1,0 +1,17 @@
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+outputs/*
+!outputs/.gitkeep
+data/input/images/*
+!data/input/images/.gitkeep
+data/input/videos/*
+!data/input/videos/.gitkeep
+data/dataset/*
+!data/dataset/.gitkeep
