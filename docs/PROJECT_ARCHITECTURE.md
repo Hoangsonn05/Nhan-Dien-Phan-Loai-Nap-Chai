@@ -65,6 +65,8 @@ P9 training and P10 learned inference consumers
 - `dataset.py`: YOLO discovery, validation, class mapping, leakage audit, statistics and manifest boundary.
 - `evaluation.py`: model-agnostic prediction contract, deterministic one-to-one
   IoU matching, class-aware metrics and extended confusion matrix.
+- `training.py`: validated config/preflight, deterministic manifest subset, backend adapter,
+  non-destructive experiment metadata and canonical checkpoint contract.
 - `models.py`: shared algorithm and runtime contracts (`Detection`, `Track`, `CountEvent`, `FramePacket`, `FrameResult`, `RunSummary`).
 - `detector.py`: HSV masking, morphology, contours, geometry filter, classification candidate.
 - `tracker.py`: identity tracking baseline.
@@ -82,9 +84,11 @@ P9 training and P10 learned inference consumers
 - Không hardcode dataset path trong thuật toán.
 - Evaluation/training phải consume canonical manifest, không rediscover hoặc parse raw labels riêng.
 - Manifest chỉ dùng relative paths và loader từ chối path escape dataset root.
+- Training chỉ materialize `train`/`val`; `test` không tham gia optimization hoặc model selection.
+- Framework-specific training nằm sau adapter; runtime pipeline không load checkpoint trong P9.
 - Class mapping giữ nguyên mapping chính thức từ `data.yaml`; không phụ thuộc filesystem order.
 - Threshold phải nằm trong config, không rải trong nhiều module.
-- Không thêm deep learning cho đến khi baseline được đo và evidence cho thấy cần thiết.
+- P9 chỉ huấn luyện offline; learned checkpoint chưa được nối vào runtime pipeline trước P10.
 
 ## 7. Known future work
 - calibration HSV bằng dataset thật;
@@ -92,4 +96,4 @@ P9 training and P10 learned inference consumers
 - tách tracking identity khỏi color decision;
 - color stabilization qua nhiều frame;
 - đưa HSV baseline và learned prediction sau này qua cùng P8 evaluator;
-- chỉ cân nhắc YOLO/classifier học máy nếu classical baseline không đạt tiêu chí.
+- đánh giá learned detector qua P8 sau khi P10 cung cấp canonical inference adapter.

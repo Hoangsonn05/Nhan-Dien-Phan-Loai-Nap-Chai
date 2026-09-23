@@ -1,4 +1,4 @@
-# BottleCapVision Python Base v1.4 — P7 Dataset Boundary
+# BottleCapVision Python Base — P9 Training Boundary
 
 Nền tảng software-only cho đồ án **nhận diện / phân biệt màu nắp chai**.
 
@@ -178,6 +178,42 @@ report.save("outputs/evaluation_report.json")
 Metric không xác định được serialize thành JSON `null`; macro average ghi rõ số class
 được include. AP/mAP chưa được tính vì HSV `color_ratio` không phải confidence đã
 calibrate. Evaluator không đọc lại raw YOLO labels, ảnh, tracker hoặc counter.
+
+## Training boundary P9
+
+`bottle_cap_vision.training` chỉ nhận canonical `DatasetManifest`. Adapter tạo một
+dataset view riêng trong experiment bằng hard-link ảnh và label sinh từ canonical
+annotations; chỉ `train` và `val` được materialize. Raw dataset và split `test` không
+bị sửa hoặc dùng để optimize/chọn checkpoint.
+
+Cài backend training riêng (runtime OpenCV không phụ thuộc ML stack):
+
+```powershell
+pip install -r requirements-training.txt
+```
+
+Preflight không chạy optimization:
+
+```powershell
+python scripts/train_model.py `
+  --manifest outputs/dataset_manifest.json `
+  --dataset-root data/dataset/archive `
+  --config configs/training_smoke.json `
+  --dry-run
+```
+
+Bỏ `--dry-run` để chạy smoke. Config mẫu giới hạn 12 train/4 val, 1 epoch và mọi
+artifact đều mang cờ `smoke_checkpoint_not_final_model`. Xóa hai trường
+`train_sample_limit`/`val_sample_limit`, đổi experiment name và cấu hình compute để
+train toàn bộ canonical train/val qua cùng code path. Experiment name đã tồn tại sẽ
+bị từ chối, không overwrite.
+
+Ultralytics có thể tải base checkpoint `yolo11n.pt` và font ở lần chạy đầu; model ID,
+backend/version, effective arguments, seed, device, dataset fingerprint, exact class
+mapping và canonical `best`/`last` checkpoint đều được ghi vào metadata. Sau khi asset
+đã có local, training không cần discovery hoặc download dataset qua mạng. Seeded plan
+và backend hỗ trợ configuration/data reproducibility; không cam kết bitwise identical
+cho mọi GPU/kernel.
 
 ## Known baseline limitation
 

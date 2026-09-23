@@ -1,6 +1,15 @@
 # Changelog
 
-## Unreleased — P8 Evaluation boundary
+## Unreleased — P9 Training boundary
+
+- Thêm validated `TrainingConfig`, full-manifest preflight và cảnh báo explicit cho class zero/low train support.
+- Thêm adapter Ultralytics phía sau framework-neutral training contract; runtime pipeline không thay đổi.
+- Materialize deterministic train/val view từ P7 manifest bằng hard-link ảnh và canonical labels; loại test khỏi lifecycle.
+- Mỗi experiment có manifest snapshot, seed/environment/backend metadata, effective arguments và không overwrite output cũ.
+- Chuẩn hóa checkpoint `best`/`last` cùng checkpoint metadata để P10 kiểm tra mapping/fingerprint/model loader.
+- Thêm CLI dry-run/smoke, fake-backend unit tests và real CPU smoke checkpoint được đánh dấu không phải final model.
+
+## P8 Evaluation boundary
 
 - Thêm canonical prediction contract dùng class ID và normalized bbox từ P7.
 - Thêm deterministic one-to-one IoU matching, tách localization correspondence khỏi class correctness.

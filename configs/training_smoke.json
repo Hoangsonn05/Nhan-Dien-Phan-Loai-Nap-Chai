@@ -1,0 +1,14 @@
+{
+  "model": "yolo11n.pt",
+  "epochs": 1,
+  "batch_size": 4,
+  "image_size": 160,
+  "device": "cpu",
+  "seed": 20260924,
+  "workers": 0,
+  "output_root": "outputs/experiments",
+  "experiment_name": "p9_smoke_001",
+  "train_sample_limit": 12,
+  "val_sample_limit": 4,
+  "low_support_threshold": 5
+}
