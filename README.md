@@ -98,6 +98,27 @@ Không mở cửa sổ preview:
 python main.py --source data/input/videos/sample.mp4 --output outputs/result.mp4 --no-display
 ```
 
+Runtime video giữ frame index 0-based xuyên suốt `FramePacket`, `FrameResult`, CSV
+và count event. `VideoSource` không tự bịa FPS: nếu container không cung cấp FPS hợp
+lệ thì source để metadata là `None`, và `VideoSink` fail rõ ràng vì không thể tạo
+video đúng tốc độ. Output video dùng kích thước và FPS của source, codec mặc định
+`mp4v`, đồng thời từ chối output trùng input. JSON cuối run có `frames_processed`
+để đối chiếu trực tiếp với số frame decode từ video và số record CSV.
+
+Checkpoint smoke P9/P10 có cấu hình runtime riêng, không thay đổi default HSV:
+
+```powershell
+python main.py --source data/input/videos/sample.mp4 `
+  --config configs/config.learned-p9-smoke.json `
+  --output outputs/learned_result.mp4 `
+  --csv outputs/learned_frames.csv `
+  --json outputs/learned_result.json `
+  --no-display --max-frames 50
+```
+
+`average_processing_fps` được tính bằng số frame chia tổng thời gian chỉ bao quanh
+`core.process_frame`; nó không phải source FPS và không bao gồm model load hay sink I/O.
+
 ## 10 màu cấu hình mặc định
 
 - Blue

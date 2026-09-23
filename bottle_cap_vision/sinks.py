@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 from dataclasses import asdict
 import json
+import math
 from pathlib import Path
 from typing import TextIO
 
@@ -47,10 +48,13 @@ class VideoSink:
 
     def open(self, metadata: SourceMetadata) -> None:
         self._metadata = metadata
-
-    def _open_writer(self, frame) -> None:
-        height, width = frame.shape[:2]
-        fps = self._metadata.fps or 30.0
+        fps = metadata.fps
+        width = metadata.width
+        height = metadata.height
+        if fps is None or not math.isfinite(fps) or fps <= 0:
+            raise RuntimeError("Cannot write output video without valid source FPS metadata")
+        if width is None or height is None or width <= 0 or height <= 0:
+            raise RuntimeError("Cannot write output video without valid source dimensions")
         self.path.parent.mkdir(parents=True, exist_ok=True)
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
         writer = cv2.VideoWriter(str(self.path), fourcc, fps, (width, height))
@@ -62,7 +66,13 @@ class VideoSink:
     def write(self, packet: FramePacket, result: FrameResult, metrics: RuntimeMetrics) -> bool:
         annotated = annotate_frame(packet.frame, result, self.config, metrics.processing_fps)
         if self._writer is None:
-            self._open_writer(annotated)
+            raise RuntimeError("VideoSink must be opened before writing")
+        height, width = annotated.shape[:2]
+        if (width, height) != (self._metadata.width, self._metadata.height):
+            raise RuntimeError(
+                "Output frame dimensions differ from source metadata: "
+                f"frame={width}x{height}, metadata={self._metadata.width}x{self._metadata.height}"
+            )
         self._writer.write(annotated)
         return True
 
@@ -152,6 +162,7 @@ class JsonSink:
             return
         payload = {
             "source": self.source,
+            "frames_processed": summary.frames_processed,
             "total_count": summary.total_count,
             "count_by_color": summary.count_by_color,
             "count_events": [asdict(event) for event in summary.count_events],

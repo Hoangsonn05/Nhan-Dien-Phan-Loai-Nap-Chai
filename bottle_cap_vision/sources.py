@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from pathlib import Path
 from typing import Iterator
 
@@ -39,6 +40,7 @@ class VideoSource:
     def __init__(self, path: str | Path):
         self.path = Path(path)
         self._capture = None
+        self._expected_frames: int | None = None
         self.metadata = SourceMetadata()
 
     def open(self) -> None:
@@ -47,10 +49,23 @@ class VideoSource:
             capture.release()
             raise RuntimeError(f"Cannot open video: {self.path}")
         self._capture = capture
-        fps = capture.get(cv2.CAP_PROP_FPS) or 30.0
+        fps_value = float(capture.get(cv2.CAP_PROP_FPS))
+        fps = fps_value if math.isfinite(fps_value) and fps_value > 0 else None
         width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        self.metadata = SourceMetadata(fps=float(fps), width=width, height=height)
+        if width <= 0 or height <= 0:
+            capture.release()
+            self._capture = None
+            raise RuntimeError(
+                f"Video has invalid dimensions ({width}x{height}): {self.path}"
+            )
+        frame_count = float(capture.get(cv2.CAP_PROP_FRAME_COUNT))
+        self._expected_frames = (
+            int(round(frame_count))
+            if math.isfinite(frame_count) and frame_count > 0
+            else None
+        )
+        self.metadata = SourceMetadata(fps=fps, width=width, height=height)
 
     def __iter__(self) -> Iterator[FramePacket]:
         if self._capture is None:
@@ -59,7 +74,21 @@ class VideoSource:
         while True:
             ok, frame = self._capture.read()
             if not ok:
+                if self._expected_frames is not None and frame_index < self._expected_frames:
+                    raise RuntimeError(
+                        "Video decoding stopped before the container-reported frame count: "
+                        f"decoded={frame_index}, expected={self._expected_frames}, path={self.path}"
+                    )
                 break
+            if frame is None or frame.size == 0:
+                raise RuntimeError(f"Video decoded an empty frame at index {frame_index}: {self.path}")
+            height, width = frame.shape[:2]
+            if (width, height) != (self.metadata.width, self.metadata.height):
+                raise RuntimeError(
+                    "Decoded frame dimensions differ from video metadata at "
+                    f"index {frame_index}: frame={width}x{height}, "
+                    f"metadata={self.metadata.width}x{self.metadata.height}"
+                )
             yield FramePacket(frame=frame, frame_index=frame_index)
             frame_index += 1
 
@@ -67,3 +96,4 @@ class VideoSource:
         if self._capture is not None:
             self._capture.release()
             self._capture = None
+        self._expected_frames = None

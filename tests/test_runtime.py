@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 
 from bottle_cap_vision.config import AppConfig
-from bottle_cap_vision.models import Detection, FramePacket
+from bottle_cap_vision.models import Detection, FramePacket, SourceMetadata
 from bottle_cap_vision.pipeline import BottleCapPipeline
 from bottle_cap_vision.runtime import run
 from bottle_cap_vision.sinks import CsvSink, DisplaySink, ImageSink, JsonSink, VideoSink
@@ -22,7 +22,7 @@ class FakeSource:
         self.frames = frames
         self.opened = False
         self.closed = False
-        self.metadata = None
+        self.metadata = SourceMetadata(fps=25.0, width=120, height=80)
 
     def open(self):
         self.opened = True
@@ -94,6 +94,7 @@ def test_video_source_yields_sequential_frames_and_releases(monkeypatch):
                 cv2.CAP_PROP_FPS: 25.0,
                 cv2.CAP_PROP_FRAME_WIDTH: 120,
                 cv2.CAP_PROP_FRAME_HEIGHT: 80,
+                cv2.CAP_PROP_FRAME_COUNT: 2,
             }[key]
 
         def read(self):
@@ -133,6 +134,69 @@ def test_fake_source_core_memory_sinks_and_max_frames_are_independent():
     assert source.closed and sink_a.closed and sink_b.closed
 
 
+@pytest.mark.parametrize("max_frames", [0, -1, False])
+def test_runner_rejects_non_positive_max_frames(max_frames):
+    with pytest.raises(ValueError, match="positive integer"):
+        run(
+            FakeSource(_blank_frames(1)),
+            BottleCapPipeline(AppConfig.default()),
+            [MemorySink()],
+            max_frames=max_frames,
+        )
+
+
+def test_processing_fps_is_frames_divided_by_total_core_time(monkeypatch):
+    import bottle_cap_vision.runtime as runtime
+
+    times = iter([0.0, 1.0, 1.0, 4.0])
+    monkeypatch.setattr(runtime, "perf_counter", lambda: next(times))
+    sink = MemorySink()
+
+    summary = runtime.run(
+        FakeSource(_blank_frames(2)),
+        BottleCapPipeline(AppConfig.default()),
+        [sink],
+    )
+
+    assert summary.processing_seconds == 4.0
+    assert summary.average_processing_fps == 0.5
+    assert [item[2].processing_fps for item in sink.items] == [1.0, 0.5]
+
+
+def test_video_source_reports_midstream_decode_failure_and_runner_releases(monkeypatch):
+    frame = _blank_frames(1)[0]
+
+    class TruncatedCapture:
+        def __init__(self):
+            self.reads = 0
+            self.released = False
+
+        def isOpened(self):
+            return True
+
+        def get(self, key):
+            return {
+                cv2.CAP_PROP_FPS: 25.0,
+                cv2.CAP_PROP_FRAME_WIDTH: 120,
+                cv2.CAP_PROP_FRAME_HEIGHT: 80,
+                cv2.CAP_PROP_FRAME_COUNT: 3,
+            }[key]
+
+        def read(self):
+            self.reads += 1
+            return (True, frame) if self.reads == 1 else (False, None)
+
+        def release(self):
+            self.released = True
+
+    capture = TruncatedCapture()
+    monkeypatch.setattr(cv2, "VideoCapture", lambda path: capture)
+
+    with pytest.raises(RuntimeError, match="decoded=1, expected=3"):
+        run(VideoSource("truncated.mp4"), BottleCapPipeline(AppConfig.default()), [])
+    assert capture.released
+
+
 def test_runner_closes_resources_on_stop_and_exception():
     stopped_source = FakeSource(_blank_frames(3))
     stopped_sink = MemorySink(stop_after=1)
@@ -169,6 +233,7 @@ def test_image_csv_and_json_outputs_are_sink_owned(tmp_path):
     payload = json.loads(json_path.read_text(encoding="utf-8"))
     assert payload == {
         "source": str(source_path),
+        "frames_processed": 1,
         "total_count": 0,
         "count_by_color": {},
         "count_events": [],
@@ -262,6 +327,16 @@ def test_image_cli_composes_source_core_and_output_sinks(monkeypatch, tmp_path):
     assert output.exists()
     assert csv_output.exists()
     assert json_output.exists()
+
+
+@pytest.mark.parametrize("value", ["0", "-1"])
+def test_cli_rejects_non_positive_max_frames(monkeypatch, value):
+    import main as cli
+
+    monkeypatch.setattr(sys, "argv", ["main.py", "--max-frames", value])
+    with pytest.raises(SystemExit) as raised:
+        cli.parse_args()
+    assert raised.value.code == 2
 
 
 def test_fake_source_core_stabilizer_and_memory_sink_preserve_stable_color():

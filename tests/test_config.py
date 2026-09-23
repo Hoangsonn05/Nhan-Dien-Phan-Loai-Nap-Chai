@@ -164,3 +164,14 @@ def test_learned_detector_config_round_trip(tmp_path):
     save_config(cfg, path)
 
     assert load_config(path).detector == cfg.detector
+
+
+def test_project_learned_smoke_config_is_loadable():
+    cfg = load_config("configs/config.learned-p9-smoke.json")
+
+    assert cfg.detector.backend == "learned"
+    assert cfg.detector.checkpoint == "outputs/experiments/p9_smoke_001/checkpoints/best.pt"
+    assert cfg.detector.metadata.endswith("checkpoint_metadata.json")
+    assert cfg.detector.device == "cpu"
+    assert cfg.detector.confidence_threshold == 0.25
+    assert [color.name for color in cfg.colors] == DEFAULT_COLORS

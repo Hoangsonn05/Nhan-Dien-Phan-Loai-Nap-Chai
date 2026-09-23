@@ -15,6 +15,13 @@ from bottle_cap_vision.sources import ImageSource, VideoSource
 IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".bmp", ".webp", ".tif", ".tiff"}
 
 
+def positive_int(value: str) -> int:
+    parsed = int(value)
+    if parsed <= 0:
+        raise argparse.ArgumentTypeError("must be a positive integer")
+    return parsed
+
+
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Bottle Cap Vision - Python/OpenCV core baseline")
     p.add_argument("--source", help="Path to image or video")
@@ -24,7 +31,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--json", dest="json_output", help="Final JSON result")
     p.add_argument("--no-display", action="store_true")
     p.add_argument("--save-default-config", action="store_true")
-    p.add_argument("--max-frames", type=int)
+    p.add_argument("--max-frames", type=positive_int)
     return p.parse_args()
 
 
@@ -58,8 +65,13 @@ def main() -> int:
         print("Use --source <image-or-video>")
         return 2
 
+    source_is_image = is_image(args.source)
+    if not source_is_image and args.output:
+        if Path(args.output).resolve() == Path(args.source).resolve():
+            raise ValueError("Output video path must differ from the input video path")
+
     core = BottleCapPipeline(cfg, detector=create_detector(cfg))
-    if is_image(args.source):
+    if source_is_image:
         out = Path(args.output) if args.output else Path("outputs") / "image_result.jpg"
         image_sink = ImageSink(out, cfg)
         sinks = [image_sink]

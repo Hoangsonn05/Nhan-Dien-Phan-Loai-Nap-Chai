@@ -106,6 +106,7 @@ class RunSummary:
     """Final runtime summary independent of source and output paths."""
 
     frames_processed: int
+    processing_seconds: float
     average_processing_fps: float
     total_count: int
     count_by_color: dict[str, int]
