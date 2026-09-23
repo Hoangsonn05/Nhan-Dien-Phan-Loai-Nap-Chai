@@ -1,4 +1,4 @@
-# BottleCapVision Python Base v1.3 — P4 Runtime I/O Boundaries
+# BottleCapVision Python Base v1.4 — P7 Dataset Boundary
 
 Nền tảng software-only cho đồ án **nhận diện / phân biệt màu nắp chai**.
 
@@ -29,6 +29,7 @@ BottleCapVision_Python_Base/
 ├── bottle_cap_vision/
 │   ├── __init__.py
 │   ├── config.py
+│   ├── dataset.py
 │   ├── models.py
 │   ├── detector.py
 │   ├── tracker.py
@@ -43,6 +44,7 @@ BottleCapVision_Python_Base/
 ├── tests/
 │   ├── test_config.py
 │   ├── test_core.py
+│   ├── test_dataset.py
 │   └── test_runtime.py
 ├── docs/
 │   ├── PROJECT_ARCHITECTURE.md
@@ -129,6 +131,31 @@ Bản này sửa ở hai tầng:
 ## Boundary runtime P4
 
 `BottleCapPipeline.process_frame()` chỉ nhận frame trong bộ nhớ và trả `FrameResult`. Đọc image/video thuộc Source; annotation, display và ghi file thuộc Sink; timing, `max_frames`, stop request và cleanup thuộc runner. Cả `main.py` và `scripts/run_image.py` đều compose cùng boundary này. Thuật toán HSV, tracking association, line-crossing và config semantics P0–P3 không đổi.
+
+## Dataset boundary P7
+
+Dataset thật là Roboflow YOLOv5 object detection tại `data/dataset/archive/`, với split vật lý `train`, `valid` và `test`. `valid` được canonical hóa thành `val`. `data.yaml` là source of truth cho class ID và tên class; Dataset Layer giữ nguyên tên lowercase và không alias ngầm sang tên runtime Title Case.
+
+Audit strict và build manifest:
+
+```powershell
+python -m bottle_cap_vision.dataset data/dataset/archive `
+  --runtime-config configs/config.json `
+  --audit-report outputs/dataset_audit.json `
+  --manifest outputs/dataset_manifest.json
+```
+
+Label rỗng được biểu diễn là negative sample hợp lệ theo policy mặc định. Dùng `--require-objects` nếu contract của một dataset khác cấm negative sample. Manifest chỉ được ghi khi không có audit ERROR; nó chứa annotations canonical, relative paths, statistics, SHA-256 từng ảnh và fingerprint semantic để P8/P9 không parse raw YOLO lại.
+
+Consumer API:
+
+```python
+from bottle_cap_vision.dataset import DatasetManifest
+
+dataset = DatasetManifest.load("outputs/dataset_manifest.json")
+for sample in dataset.split("train"):
+    image_path = dataset.resolve_image("data/dataset/archive", sample)
+```
 
 ## Known baseline limitation
 

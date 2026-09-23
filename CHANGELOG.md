@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.4.0 — P7 Dataset boundary
+
+- Xác nhận dataset thật là Roboflow YOLOv5 object detection với split `train/valid/test`.
+- Thêm canonical sample/annotation contract, strict audit, class statistics và negative-sample policy explicit.
+- Phát hiện pairing errors, corrupt image, malformed bbox, duplicate content và cross-split leakage.
+- Thêm deterministic portable manifest, semantic fingerprint và load API cho P8/P9.
+- Giữ nguyên mapping lowercase từ `data.yaml`; chỉ cảnh báo casing mismatch với runtime.
+- Không thay đổi detector, tracker, stabilizer, counter hoặc runtime I/O.
+
 ## v1.3.0 — P4 Runtime I/O separation
 
 - Tách `ImageSource` và `VideoSource` khỏi vision core.
