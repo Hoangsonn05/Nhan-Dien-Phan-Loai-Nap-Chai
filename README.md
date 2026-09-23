@@ -1,20 +1,16 @@
-# BottleCapVision Python Base v1.2 — P0
+# BottleCapVision Python Base v1.3 — P4 Runtime I/O Boundaries
 
 Nền tảng software-only cho đồ án **nhận diện / phân biệt màu nắp chai**.
 
 ## Kiến trúc chính
 
 ```text
-Image / Video
-    -> Python + OpenCV
-    -> ROI / preprocessing
-    -> HSV color masks
-    -> contour + geometry filtering
-    -> color classification
-    -> tracking
-    -> line crossing
-    -> total + count by color
-    -> annotated output / CSV / JSON
+ImageSource / VideoSource
+    -> FramePacket
+    -> BottleCapPipeline (in-memory vision core)
+       -> detection -> tracking -> counting -> FrameResult
+    -> runtime runner
+    -> Image / Video / Display / CSV / JSON sinks
 ```
 
 DobotVisionStudio không còn là dependency của project. Python/OpenCV trực tiếp đọc ảnh và video.
@@ -38,12 +34,16 @@ BottleCapVision_Python_Base/
 │   ├── tracker.py
 │   ├── counter.py
 │   ├── pipeline.py
+│   ├── sources.py
+│   ├── sinks.py
+│   ├── runtime.py
 │   └── visualization.py
 ├── scripts/
 │   └── run_image.py
 ├── tests/
 │   ├── test_config.py
-│   └── test_core.py
+│   ├── test_core.py
+│   └── test_runtime.py
 ├── docs/
 │   ├── PROJECT_ARCHITECTURE.md
 │   ├── PYTHON_OPENCV_CORE_FLOW.md
@@ -126,9 +126,9 @@ Bản này sửa ở hai tầng:
 1. `configs/config.json` chứa đầy đủ 10 màu.
 2. `load_config()` từ chối `colors: []` thay vì âm thầm làm detector mất toàn bộ màu. Nếu khóa `colors` không có, loader giữ cấu hình mặc định an toàn.
 
-## Phạm vi P0
+## Boundary runtime P4
 
-P0 chỉ clean nền tảng: canonical runtime contracts, import/package structure, canonical image execution path và regression tests. Thuật toán HSV, tracking association, line-crossing và config semantics được giữ nguyên để P1–P3 có scope độc lập và có thể kiểm chứng rõ ràng.
+`BottleCapPipeline.process_frame()` chỉ nhận frame trong bộ nhớ và trả `FrameResult`. Đọc image/video thuộc Source; annotation, display và ghi file thuộc Sink; timing, `max_frames`, stop request và cleanup thuộc runner. Cả `main.py` và `scripts/run_image.py` đều compose cùng boundary này. Thuật toán HSV, tracking association, line-crossing và config semantics P0–P3 không đổi.
 
 ## Known baseline limitation
 

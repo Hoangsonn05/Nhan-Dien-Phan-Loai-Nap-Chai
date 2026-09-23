@@ -8,6 +8,8 @@ from __future__ import annotations
 from collections import deque
 from dataclasses import dataclass, field
 
+import numpy as np
+
 
 @dataclass
 class Detection:
@@ -44,3 +46,50 @@ class CountEvent:
     track_id: int
     color: str
     frame_index: int
+
+
+@dataclass(frozen=True)
+class FramePacket:
+    """One in-memory frame supplied by a runtime source."""
+
+    frame: np.ndarray
+    frame_index: int
+
+
+@dataclass(frozen=True)
+class SourceMetadata:
+    """Optional media properties exposed by a source to output sinks."""
+
+    fps: float | None = None
+    width: int | None = None
+    height: int | None = None
+
+
+@dataclass(frozen=True)
+class FrameResult:
+    """Structured business result produced by the core for one frame."""
+
+    frame_index: int
+    detections: list[Detection]
+    tracks: list[Track]
+    events: list[CountEvent]
+    total_count: int
+    count_by_color: dict[str, int]
+
+
+@dataclass(frozen=True)
+class RuntimeMetrics:
+    """Presentation-only metrics calculated outside the vision core."""
+
+    processing_fps: float = 0.0
+
+
+@dataclass(frozen=True)
+class RunSummary:
+    """Final runtime summary independent of source and output paths."""
+
+    frames_processed: int
+    average_processing_fps: float
+    total_count: int
+    count_by_color: dict[str, int]
+    count_events: list[CountEvent]

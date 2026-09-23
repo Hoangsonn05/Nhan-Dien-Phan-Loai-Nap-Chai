@@ -299,18 +299,17 @@ def test_shared_runtime_contracts_are_canonical():
     assert CounterCountEvent is ModelCountEvent
 
 
-def test_pipeline_run_image_is_canonical_image_path(tmp_path):
-    import cv2
-
+def test_pipeline_processes_an_in_memory_frame():
+    from bottle_cap_vision.models import FrameResult
     from bottle_cap_vision.pipeline import BottleCapPipeline
 
-    source = tmp_path / "blank.png"
-    output = tmp_path / "annotated.png"
-    assert cv2.imwrite(str(source), np.zeros((80, 120, 3), dtype=np.uint8))
+    result = BottleCapPipeline(AppConfig.default()).process_frame(
+        np.zeros((80, 120, 3), dtype=np.uint8),
+        frame_index=7,
+    )
 
-    result = BottleCapPipeline(AppConfig.default()).run_image(source, output)
-
-    assert output.exists()
-    assert result["source"] == str(source)
-    assert result["output"] == str(output)
-    assert result["detections"] == []
+    assert isinstance(result, FrameResult)
+    assert result.frame_index == 7
+    assert result.detections == []
+    assert result.tracks == []
+    assert result.events == []

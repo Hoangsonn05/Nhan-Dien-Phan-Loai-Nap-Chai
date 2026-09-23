@@ -15,6 +15,9 @@ if str(ROOT) not in sys.path:
 
 from bottle_cap_vision.config import load_config
 from bottle_cap_vision.pipeline import BottleCapPipeline
+from bottle_cap_vision.runtime import run
+from bottle_cap_vision.sinks import ImageSink
+from bottle_cap_vision.sources import ImageSource
 
 
 def main() -> int:
@@ -25,8 +28,12 @@ def main() -> int:
     args = parser.parse_args()
 
     cfg = load_config(args.config)
-    result = BottleCapPipeline(cfg).run_image(args.image, args.output)
-    print(result["output"])
+    run(
+        ImageSource(args.image),
+        BottleCapPipeline(cfg),
+        [ImageSink(args.output, cfg)],
+    )
+    print(args.output)
     return 0
 
 

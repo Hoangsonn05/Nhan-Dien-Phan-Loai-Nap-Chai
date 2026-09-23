@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import asdict
 from pathlib import Path
 
 from bottle_cap_vision.config import AppConfig, load_config, save_config
 from bottle_cap_vision.pipeline import BottleCapPipeline
+from bottle_cap_vision.runtime import run
+from bottle_cap_vision.sinks import CsvSink, DisplaySink, ImageSink, JsonSink, VideoSink
+from bottle_cap_vision.sources import ImageSource, VideoSource
 
 
 IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".bmp", ".webp", ".tif", ".tiff"}
@@ -53,27 +57,34 @@ def main() -> int:
         print("Use --source <image-or-video>")
         return 2
 
-    pipeline = BottleCapPipeline(cfg)
+    core = BottleCapPipeline(cfg)
     if is_image(args.source):
         out = Path(args.output) if args.output else Path("outputs") / "image_result.jpg"
-        result = pipeline.run_image(args.source, out)
-        detections = result["detections"]
+        image_sink = ImageSink(out, cfg)
+        sinks = [image_sink]
+        if args.csv:
+            sinks.append(CsvSink(args.csv))
+        if args.json_output:
+            sinks.append(JsonSink(args.json_output, source=args.source))
+        run(ImageSource(args.source), core, sinks, max_frames=args.max_frames)
+        detections = image_sink.last_result.detections if image_sink.last_result else []
         print(f"Detections: {len(detections)}")
         for det in detections:
             print(f"  {det.color:8s} centroid={det.centroid} area={det.area:.0f}")
         print(f"Saved: {out}")
         return 0
 
-    result = pipeline.run_video(
-        args.source,
-        output=args.output,
-        csv_output=args.csv,
-        display=not args.no_display,
-        max_frames=args.max_frames,
-    )
+    sinks = []
+    if args.output:
+        sinks.append(VideoSink(args.output, cfg))
+    if args.csv:
+        sinks.append(CsvSink(args.csv))
     if args.json_output:
-        pipeline.export_result_json(args.json_output, source=args.source)
-    print(result)
+        sinks.append(JsonSink(args.json_output, source=args.source))
+    if not args.no_display:
+        sinks.append(DisplaySink(cfg))
+    summary = run(VideoSource(args.source), core, sinks, max_frames=args.max_frames)
+    print(asdict(summary))
     return 0
 
 

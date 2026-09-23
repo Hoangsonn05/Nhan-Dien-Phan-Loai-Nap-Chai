@@ -1,4 +1,4 @@
-# Project Architecture v1.2 — P0 Python/OpenCV Standalone
+# Project Architecture v1.3 — P4 Source/Core/Sink
 
 ## 1. Scope
 Dự án hoạt động hoàn toàn trên phần mềm. Nguồn vào hiện tại là ảnh tĩnh hoặc video có sẵn. Không yêu cầu camera vật lý, PLC, robot, GPIO, băng tải thật hoặc DobotVisionStudio.
@@ -14,28 +14,23 @@ Dự án hoạt động hoàn toàn trên phần mềm. Nguồn vào hiện tạ
 ## 3. System boundary
 
 ```text
-INPUT IMAGE / VIDEO
+ImageSource / VideoSource
         |
         v
-Python + OpenCV acquisition
+FramePacket (frame + frame_index)
         |
         v
-ROI / preprocessing
+BottleCapPipeline core
+(detection -> tracking -> counting)
         |
         v
-candidate detection
+FrameResult
         |
         v
-color classification
+Runtime runner
         |
         v
-tracking
-        |
-        v
-line crossing counter
-        |
-        v
-visualization / CSV / JSON
+Image / Video / Display / CSV / JSON sinks
 ```
 
 ## 4. Source of truth
@@ -46,13 +41,16 @@ visualization / CSV / JSON
 
 ## 5. Module ownership
 - `config.py`: schema, default values, JSON load/save/validation.
-- `models.py`: shared runtime contracts (`Detection`, `Track`, `CountEvent`).
+- `models.py`: shared algorithm and runtime contracts (`Detection`, `Track`, `CountEvent`, `FramePacket`, `FrameResult`, `RunSummary`).
 - `detector.py`: HSV masking, morphology, contours, geometry filter, classification candidate.
 - `tracker.py`: identity tracking baseline.
 - `counter.py`: crossing event và aggregation.
-- `pipeline.py`: canonical orchestration cho ảnh/video và annotation flow.
-- `visualization.py`: overlay.
-- `main.py`: CLI entry point.
+- `pipeline.py`: in-memory vision core; không sở hữu file, capture, writer hoặc GUI.
+- `sources.py`: image/video acquisition và source metadata.
+- `sinks.py`: annotation, display, image/video/CSV/JSON output.
+- `runtime.py`: iteration, timing, stop, `max_frames` và cleanup.
+- `visualization.py`: pure drawing/presentation helpers.
+- `main.py`: CLI composition root.
 
 ## 6. Design constraints
 - Không đếm detection theo từng frame.

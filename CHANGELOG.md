@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.3.0 — P4 Runtime I/O separation
+
+- Tách `ImageSource` và `VideoSource` khỏi vision core.
+- Chuẩn hóa `FramePacket`, `FrameResult`, `RuntimeMetrics` và `RunSummary`.
+- Giới hạn `BottleCapPipeline` vào detection/tracking/counting trên frame trong bộ nhớ.
+- Chuyển annotation, display, image/video, CSV và JSON output sang các sink độc lập.
+- Thêm runtime runner sở hữu timing, `max_frames`, stop request và cleanup.
+- Chuyển `main.py` và `scripts/run_image.py` sang cùng Source → Core → Sink flow.
+- Giữ nguyên detector, tracker, counter và config semantics P0–P3.
+
 ## v1.2.0 — P0 Foundation clean
 
 - Thêm `bottle_cap_vision/models.py` làm canonical runtime contract cho `Detection`, `Track`, `CountEvent`.
