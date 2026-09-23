@@ -55,6 +55,13 @@ class TrackingConfig:
 
 
 @dataclass
+class ColorStabilizationConfig:
+    enabled: bool = True
+    window_size: int = 5
+    min_observations: int = 3
+
+
+@dataclass
 class CountingConfig:
     enabled: bool = True
     orientation: str = "horizontal"
@@ -69,6 +76,7 @@ class AppConfig:
     roi: ROIConfig = field(default_factory=ROIConfig)
     detection: DetectionConfig = field(default_factory=DetectionConfig)
     tracking: TrackingConfig = field(default_factory=TrackingConfig)
+    color_stabilization: ColorStabilizationConfig = field(default_factory=ColorStabilizationConfig)
     counting: CountingConfig = field(default_factory=CountingConfig)
 
     @classmethod
@@ -248,6 +256,32 @@ def _validate_tracking(raw_tracking: object) -> TrackingConfig:
     return cfg
 
 
+def _validate_color_stabilization(raw: object) -> ColorStabilizationConfig:
+    if raw is None:
+        return ColorStabilizationConfig()
+    if not isinstance(raw, dict):
+        raise ValueError("'color_stabilization' must be a JSON object")
+    allowed = {"enabled", "window_size", "min_observations"}
+    unknown = sorted(set(raw) - allowed)
+    if unknown:
+        raise ValueError(f"Unknown color_stabilization field(s): {', '.join(unknown)}")
+    cfg = ColorStabilizationConfig()
+    cfg.enabled = _ensure_bool(raw.get("enabled", cfg.enabled), "color_stabilization.enabled")
+    cfg.window_size = _ensure_int(
+        raw.get("window_size", cfg.window_size),
+        "color_stabilization.window_size",
+        minimum=1,
+    )
+    cfg.min_observations = _ensure_int(
+        raw.get("min_observations", cfg.min_observations),
+        "color_stabilization.min_observations",
+        minimum=1,
+    )
+    if cfg.min_observations > cfg.window_size:
+        raise ValueError("color_stabilization.min_observations must not exceed window_size")
+    return cfg
+
+
 def _validate_counting(raw_counting: object) -> CountingConfig:
     if raw_counting is None:
         return CountingConfig()
@@ -277,6 +311,7 @@ def config_to_dict(cfg: AppConfig) -> dict:
         "roi": cfg.roi.__dict__,
         "detection": cfg.detection.__dict__,
         "tracking": cfg.tracking.__dict__,
+        "color_stabilization": cfg.color_stabilization.__dict__,
         "counting": cfg.counting.__dict__,
         "colors": [
             {
@@ -305,7 +340,7 @@ def load_config(path: str | Path) -> AppConfig:
     if not isinstance(data, dict):
         raise ValueError("Configuration root must be a JSON object")
 
-    allowed_root_keys = {"roi", "detection", "tracking", "counting", "colors"}
+    allowed_root_keys = {"roi", "detection", "tracking", "color_stabilization", "counting", "colors"}
     unknown_root = sorted(set(data) - allowed_root_keys)
     if unknown_root:
         raise ValueError(f"Unknown config field(s): {', '.join(unknown_root)}")
@@ -316,6 +351,9 @@ def load_config(path: str | Path) -> AppConfig:
     cfg.roi = _validate_roi(data.get("roi", cfg.roi.__dict__))
     cfg.detection = _validate_detection(data.get("detection", cfg.detection.__dict__))
     cfg.tracking = _validate_tracking(data.get("tracking", cfg.tracking.__dict__))
+    cfg.color_stabilization = _validate_color_stabilization(
+        data.get("color_stabilization", cfg.color_stabilization.__dict__)
+    )
     cfg.counting = _validate_counting(data.get("counting", cfg.counting.__dict__))
     cfg.colors = _parse_colors(data["colors"])
     return cfg

@@ -83,3 +83,38 @@ def test_config_round_trip(tmp_path):
     assert loaded.roi.x2 == 120
     assert loaded.roi.y2 == 140
     assert [c.name for c in loaded.colors] == DEFAULT_COLORS
+
+
+@pytest.mark.parametrize(
+    "color_stabilization",
+    [
+        {"enabled": 1},
+        {"window_size": 0},
+        {"min_observations": 0},
+        {"window_size": 3, "min_observations": 4},
+        {"unexpected": True},
+    ],
+)
+def test_invalid_color_stabilization_config_is_rejected(tmp_path, color_stabilization):
+    path = tmp_path / "config.json"
+    payload = {
+        "color_stabilization": color_stabilization,
+        "colors": [{"name": "Blue", "hsv_ranges": [{"lower": [0, 0, 0], "upper": [10, 255, 255]}]}],
+    }
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="color_stabilization|Unknown"):
+        load_config(path)
+
+
+def test_color_stabilization_defaults_and_round_trip(tmp_path):
+    cfg = AppConfig.default()
+    assert cfg.color_stabilization.enabled is True
+    assert cfg.color_stabilization.window_size == 5
+    assert cfg.color_stabilization.min_observations == 3
+
+    path = tmp_path / "config.json"
+    save_config(cfg, path)
+    loaded = load_config(path)
+
+    assert loaded.color_stabilization == cfg.color_stabilization

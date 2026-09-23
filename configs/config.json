@@ -23,6 +23,11 @@
     "min_confirmed_frames": 2,
     "max_history": 20
   },
+  "color_stabilization": {
+    "enabled": true,
+    "window_size": 5,
+    "min_observations": 3
+  },
   "counting": {
     "enabled": true,
     "orientation": "horizontal",

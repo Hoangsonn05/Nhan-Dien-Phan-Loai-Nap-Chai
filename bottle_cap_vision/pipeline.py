@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from .color_stabilizer import ColorStabilizer
 from .config import AppConfig
 from .counter import LineCounter
 from .detector import ColorCapDetector
@@ -20,6 +21,12 @@ class BottleCapPipeline:
             min_confirmed_frames=tc.min_confirmed_frames,
             max_history=tc.max_history,
         ) if tc.enabled else None
+        sc = config.color_stabilization
+        self.color_stabilizer = ColorStabilizer(
+            enabled=sc.enabled,
+            window_size=sc.window_size,
+            min_observations=sc.min_observations,
+        )
         cc = config.counting
         self.counter = LineCounter(
             orientation=cc.orientation,
@@ -31,6 +38,7 @@ class BottleCapPipeline:
     def process_frame(self, frame, frame_index: int = 0) -> FrameResult:
         detections = self.detector.detect(frame)
         tracks = self.tracker.update(detections) if self.tracker else []
+        tracks = self.color_stabilizer.update(tracks)
         events = self.counter.update(tracks, frame_index, frame.shape) if self.counter else []
         return FrameResult(
             frame_index=frame_index,

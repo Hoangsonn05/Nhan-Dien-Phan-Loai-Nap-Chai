@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 
 from bottle_cap_vision.config import AppConfig
-from bottle_cap_vision.models import FramePacket
+from bottle_cap_vision.models import Detection, FramePacket
 from bottle_cap_vision.pipeline import BottleCapPipeline
 from bottle_cap_vision.runtime import run
 from bottle_cap_vision.sinks import CsvSink, DisplaySink, ImageSink, JsonSink, VideoSink
@@ -262,3 +262,30 @@ def test_image_cli_composes_source_core_and_output_sinks(monkeypatch, tmp_path):
     assert output.exists()
     assert csv_output.exists()
     assert json_output.exists()
+
+
+def test_fake_source_core_stabilizer_and_memory_sink_preserve_stable_color():
+    class ColorSnapshotSink(MemorySink):
+        def __init__(self):
+            super().__init__()
+            self.colors = []
+
+        def write(self, packet, result, metrics):
+            self.colors.append(result.tracks[0].color)
+            return super().write(packet, result, metrics)
+
+    cfg = AppConfig.default()
+    cfg.tracking.min_confirmed_frames = 1
+    pipeline = BottleCapPipeline(cfg)
+    observations = iter(["Red", "Red", "Pink", "Red", "Red"])
+    pipeline.detector.detect = lambda frame: [
+        Detection(next(observations), (10, 10), (5, 5, 10, 10), 300, 0.8, 0.9, 0.8)
+    ]
+    source = FakeSource(_blank_frames(5))
+    sink = ColorSnapshotSink()
+
+    summary = run(source, pipeline, [sink])
+
+    assert summary.frames_processed == 5
+    assert sink.colors == ["Red"] * 5
+    assert source.closed and sink.closed

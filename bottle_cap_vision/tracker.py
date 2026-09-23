@@ -24,7 +24,7 @@ class NearestNeighborTracker:
         return math.hypot(a[0] - b[0], a[1] - b[1])
 
     def _update_track(self, track: Track, det: Detection) -> None:
-        track.color = det.color
+        track.observed_color = det.color
         track.centroid = det.centroid
         track.bbox = det.bbox
         track.history.append(det.centroid)
@@ -60,6 +60,7 @@ class NearestNeighborTracker:
             tr = Track(
                 track_id=self._next_id,
                 color=det.color,
+                observed_color=det.color,
                 centroid=det.centroid,
                 bbox=det.bbox,
                 history=history,

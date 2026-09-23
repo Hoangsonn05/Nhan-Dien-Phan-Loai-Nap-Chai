@@ -26,7 +26,11 @@ class Detection:
 
 @dataclass
 class Track:
-    """Mutable state for one tracked object."""
+    """Mutable state for one tracked object.
+
+    ``observed_color`` is the latest fresh detector classification, while
+    ``color`` is the public output color resolved by the core stabilizer.
+    """
 
     track_id: int
     color: str
@@ -37,6 +41,11 @@ class Track:
     missing: int = 0
     confirmed: bool = False
     counted: bool = False
+    observed_color: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.observed_color is None:
+            self.observed_color = self.color
 
 
 @dataclass(frozen=True)
