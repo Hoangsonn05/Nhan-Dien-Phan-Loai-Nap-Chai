@@ -14,6 +14,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from bottle_cap_vision.config import load_config
+from bottle_cap_vision.detector import create_detector
 from bottle_cap_vision.pipeline import BottleCapPipeline
 from bottle_cap_vision.runtime import run
 from bottle_cap_vision.sinks import ImageSink
@@ -30,7 +31,7 @@ def main() -> int:
     cfg = load_config(args.config)
     run(
         ImageSource(args.image),
-        BottleCapPipeline(cfg),
+        BottleCapPipeline(cfg, detector=create_detector(cfg)),
         [ImageSink(args.output, cfg)],
     )
     print(args.output)

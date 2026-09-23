@@ -68,7 +68,8 @@ P9 training and P10 learned inference consumers
 - `training.py`: validated config/preflight, deterministic manifest subset, backend adapter,
   non-destructive experiment metadata and canonical checkpoint contract.
 - `models.py`: shared algorithm and runtime contracts (`Detection`, `Track`, `CountEvent`, `FramePacket`, `FrameResult`, `RunSummary`).
-- `detector.py`: HSV masking, morphology, contours, geometry filter, classification candidate.
+- `detector.py`: detector protocol/factory và HSV masking, morphology, contours, geometry filter, classification candidate.
+- `inference.py`: P9 metadata/checkpoint validation, Ultralytics invocation và conversion sang canonical `Detection`/P8 prediction.
 - `tracker.py`: identity tracking baseline.
 - `counter.py`: crossing event và aggregation.
 - `pipeline.py`: in-memory vision core; không sở hữu file, capture, writer hoặc GUI.
@@ -88,12 +89,13 @@ P9 training and P10 learned inference consumers
 - Framework-specific training nằm sau adapter; runtime pipeline không load checkpoint trong P9.
 - Class mapping giữ nguyên mapping chính thức từ `data.yaml`; không phụ thuộc filesystem order.
 - Threshold phải nằm trong config, không rải trong nhiều module.
-- P9 chỉ huấn luyện offline; learned checkpoint chưa được nối vào runtime pipeline trước P10.
+- P10 resolve HSV/learned tại composition boundary; tracker, stabilizer, counter, runtime và sink chỉ consume canonical contracts.
+- Learned adapter chỉ nhận BGR frame và trả full-frame `(x, y, width, height)`; preprocessing/NMS/letterbox reversal thuộc backend.
 
 ## 7. Known future work
 - calibration HSV bằng dataset thật;
 - xử lý overlap giữa các dải màu gần nhau;
 - tách tracking identity khỏi color decision;
 - color stabilization qua nhiều frame;
-- đưa HSV baseline và learned prediction sau này qua cùng P8 evaluator;
-- đánh giá learned detector qua P8 sau khi P10 cung cấp canonical inference adapter.
+- production video/camera acceptance, FPS tuning và soak test thuộc P11;
+- model quality/final real-data acceptance thuộc giai đoạn sau P10.

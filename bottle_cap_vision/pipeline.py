@@ -3,7 +3,7 @@ from __future__ import annotations
 from .color_stabilizer import ColorStabilizer
 from .config import AppConfig
 from .counter import LineCounter
-from .detector import ColorCapDetector
+from .detector import DetectorProtocol, create_detector
 from .models import FrameResult
 from .tracker import NearestNeighborTracker
 
@@ -11,9 +11,9 @@ from .tracker import NearestNeighborTracker
 class BottleCapPipeline:
     """Stateful in-memory vision core for detection, tracking and counting."""
 
-    def __init__(self, config: AppConfig):
+    def __init__(self, config: AppConfig, detector: DetectorProtocol | None = None):
         self.config = config
-        self.detector = ColorCapDetector(config)
+        self.detector = detector if detector is not None else create_detector(config)
         tc = config.tracking
         self.tracker = NearestNeighborTracker(
             max_distance=tc.max_distance,

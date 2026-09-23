@@ -1,6 +1,13 @@
 # Changelog
 
-## Unreleased — P9 Training boundary
+## Unreleased — P10 Learned inference boundary
+
+- Thêm detector protocol/factory và dependency injection để HSV/learned cùng trả canonical `Detection[]` mà không rẽ nhánh downstream.
+- Thêm Ultralytics learned adapter fail-fast: kiểm tra checkpoint linkage, P9 metadata, P7 manifest mapping/fingerprint, architecture, backend version và embedded model names trước inference.
+- Chuẩn hóa `xyxy` original-frame sang integer `(x, y, width, height)`, giữ model confidence riêng với temporal confidence và không bịa evidence HSV.
+- Thêm config backend strict, CPU/CUDA semantics, P8 prediction adapter và real P9 checkpoint smoke.
+
+## P9 Training boundary
 
 - Thêm validated `TrainingConfig`, full-manifest preflight và cảnh báo explicit cho class zero/low train support.
 - Thêm adapter Ultralytics phía sau framework-neutral training contract; runtime pipeline không thay đổi.

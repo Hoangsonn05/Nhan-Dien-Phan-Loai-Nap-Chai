@@ -3,7 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 import json
-from typing import Any, List, Tuple
+import re
+from typing import List, Tuple
 
 
 DEFAULT_COLORS = [
@@ -46,6 +47,17 @@ class DetectionConfig:
 
 
 @dataclass
+class DetectorConfig:
+    """Runtime backend selection; training options do not belong here."""
+
+    backend: str = "hsv"
+    checkpoint: str | None = None
+    metadata: str | None = None
+    device: str = "cpu"
+    confidence_threshold: float = 0.25
+
+
+@dataclass
 class TrackingConfig:
     enabled: bool = True
     max_distance: float = 80.0
@@ -73,6 +85,7 @@ class CountingConfig:
 @dataclass
 class AppConfig:
     colors: List[ColorConfig] = field(default_factory=list)
+    detector: DetectorConfig = field(default_factory=DetectorConfig)
     roi: ROIConfig = field(default_factory=ROIConfig)
     detection: DetectionConfig = field(default_factory=DetectionConfig)
     tracking: TrackingConfig = field(default_factory=TrackingConfig)
@@ -238,6 +251,49 @@ def _validate_detection(raw_detection: object) -> DetectionConfig:
     return cfg
 
 
+def _validate_detector(raw_detector: object) -> DetectorConfig:
+    if raw_detector is None:
+        return DetectorConfig()
+    if not isinstance(raw_detector, dict):
+        raise ValueError("'detector' must be a JSON object")
+    allowed = {"backend", "checkpoint", "metadata", "device", "confidence_threshold"}
+    unknown = sorted(set(raw_detector) - allowed)
+    if unknown:
+        raise ValueError(f"Unknown detector field(s): {', '.join(unknown)}")
+
+    cfg = DetectorConfig()
+    backend = raw_detector.get("backend", cfg.backend)
+    if not isinstance(backend, str) or backend not in {"hsv", "learned"}:
+        raise ValueError(f"detector.backend must be one of ['hsv', 'learned']; got {backend!r}")
+    cfg.backend = backend
+
+    for field_name in ("checkpoint", "metadata"):
+        value = raw_detector.get(field_name)
+        if value is not None and (not isinstance(value, str) or not value.strip()):
+            raise ValueError(f"detector.{field_name} must be a non-empty path string")
+        setattr(cfg, field_name, value)
+
+    device = raw_detector.get("device", cfg.device)
+    if not isinstance(device, str) or not re.fullmatch(r"cpu|auto|cuda(?::[0-9]+)?", device):
+        raise ValueError("detector.device must be 'cpu', 'auto', 'cuda', or 'cuda:<index>'")
+    cfg.device = device
+    cfg.confidence_threshold = _ensure_number(
+        raw_detector.get("confidence_threshold", cfg.confidence_threshold),
+        "detector.confidence_threshold",
+        minimum=0.0,
+        maximum=1.0,
+    )
+
+    if backend == "learned":
+        if cfg.checkpoint is None:
+            raise ValueError("detector.checkpoint is required for learned backend")
+        if cfg.metadata is None:
+            raise ValueError("detector.metadata is required for learned backend")
+    elif cfg.checkpoint is not None or cfg.metadata is not None:
+        raise ValueError("detector checkpoint/metadata are only valid for learned backend")
+    return cfg
+
+
 def _validate_tracking(raw_tracking: object) -> TrackingConfig:
     if raw_tracking is None:
         return TrackingConfig()
@@ -308,6 +364,7 @@ def _validate_counting(raw_counting: object) -> CountingConfig:
 
 def config_to_dict(cfg: AppConfig) -> dict:
     return {
+        "detector": cfg.detector.__dict__,
         "roi": cfg.roi.__dict__,
         "detection": cfg.detection.__dict__,
         "tracking": cfg.tracking.__dict__,
@@ -340,7 +397,7 @@ def load_config(path: str | Path) -> AppConfig:
     if not isinstance(data, dict):
         raise ValueError("Configuration root must be a JSON object")
 
-    allowed_root_keys = {"roi", "detection", "tracking", "color_stabilization", "counting", "colors"}
+    allowed_root_keys = {"detector", "roi", "detection", "tracking", "color_stabilization", "counting", "colors"}
     unknown_root = sorted(set(data) - allowed_root_keys)
     if unknown_root:
         raise ValueError(f"Unknown config field(s): {', '.join(unknown_root)}")
@@ -348,6 +405,7 @@ def load_config(path: str | Path) -> AppConfig:
         raise ValueError("Configuration requires a non-empty 'colors' list")
 
     cfg = AppConfig.default()
+    cfg.detector = _validate_detector(data.get("detector"))
     cfg.roi = _validate_roi(data.get("roi", cfg.roi.__dict__))
     cfg.detection = _validate_detection(data.get("detection", cfg.detection.__dict__))
     cfg.tracking = _validate_tracking(data.get("tracking", cfg.tracking.__dict__))

@@ -2,11 +2,12 @@ import json
 
 import pytest
 
-from bottle_cap_vision.config import AppConfig, DEFAULT_COLORS, load_config, save_config
+from bottle_cap_vision.config import AppConfig, DEFAULT_COLORS, config_to_dict, load_config, save_config
 
 
 def test_default_config_contains_all_expected_colors():
     cfg = AppConfig.default()
+    assert cfg.detector.backend == "hsv"
     assert [color.name for color in cfg.colors] == DEFAULT_COLORS
     assert all(color.hsv_ranges for color in cfg.colors)
 
@@ -118,3 +119,48 @@ def test_color_stabilization_defaults_and_round_trip(tmp_path):
     loaded = load_config(path)
 
     assert loaded.color_stabilization == cfg.color_stabilization
+
+
+def test_learned_detector_config_requires_checkpoint_and_metadata(tmp_path):
+    path = tmp_path / "config.json"
+    payload = config_to_dict(AppConfig.default())
+    payload["detector"] = {"backend": "learned"}
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="checkpoint"):
+        load_config(path)
+
+
+@pytest.mark.parametrize(
+    "detector",
+    [
+        {"backend": "unknown"},
+        {"backend": "learned", "checkpoint": "best.pt", "metadata": "meta.json", "confidence_threshold": -0.1},
+        {"backend": "learned", "checkpoint": "best.pt", "metadata": "meta.json", "confidence_threshold": 1.1},
+        {"backend": "learned", "checkpoint": "best.pt", "metadata": "meta.json", "device": "gpu"},
+        {"backend": "hsv", "checkpoint": "best.pt"},
+        {"backend": "hsv", "unexpected": True},
+    ],
+)
+def test_invalid_detector_config_is_rejected(tmp_path, detector):
+    path = tmp_path / "config.json"
+    payload = config_to_dict(AppConfig.default())
+    payload["detector"] = detector
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="detector|Detector"):
+        load_config(path)
+
+
+def test_learned_detector_config_round_trip(tmp_path):
+    cfg = AppConfig.default()
+    cfg.detector.backend = "learned"
+    cfg.detector.checkpoint = "experiment/checkpoints/best.pt"
+    cfg.detector.metadata = "experiment/checkpoints/checkpoint_metadata.json"
+    cfg.detector.device = "cpu"
+    cfg.detector.confidence_threshold = 0.4
+    path = tmp_path / "config.json"
+
+    save_config(cfg, path)
+
+    assert load_config(path).detector == cfg.detector

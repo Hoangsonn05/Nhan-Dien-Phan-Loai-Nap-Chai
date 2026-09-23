@@ -5,6 +5,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from bottle_cap_vision.config import AppConfig, load_config, save_config
+from bottle_cap_vision.detector import create_detector
 from bottle_cap_vision.pipeline import BottleCapPipeline
 from bottle_cap_vision.runtime import run
 from bottle_cap_vision.sinks import CsvSink, DisplaySink, ImageSink, JsonSink, VideoSink
@@ -57,7 +58,7 @@ def main() -> int:
         print("Use --source <image-or-video>")
         return 2
 
-    core = BottleCapPipeline(cfg)
+    core = BottleCapPipeline(cfg, detector=create_detector(cfg))
     if is_image(args.source):
         out = Path(args.output) if args.output else Path("outputs") / "image_result.jpg"
         image_sink = ImageSink(out, cfg)
@@ -70,7 +71,8 @@ def main() -> int:
         detections = image_sink.last_result.detections if image_sink.last_result else []
         print(f"Detections: {len(detections)}")
         for det in detections:
-            print(f"  {det.color:8s} centroid={det.centroid} area={det.area:.0f}")
+            area = f"{det.area:.0f}" if det.area is not None else "n/a"
+            print(f"  {det.color:8s} centroid={det.centroid} area={area}")
         print(f"Saved: {out}")
         return 0
 

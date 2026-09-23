@@ -1,4 +1,4 @@
-# BottleCapVision Python Base — P9 Training Boundary
+# BottleCapVision Python Base — P10 Learned Inference Boundary
 
 Nền tảng software-only cho đồ án **nhận diện / phân biệt màu nắp chai**.
 
@@ -186,7 +186,7 @@ dataset view riêng trong experiment bằng hard-link ảnh và label sinh từ 
 annotations; chỉ `train` và `val` được materialize. Raw dataset và split `test` không
 bị sửa hoặc dùng để optimize/chọn checkpoint.
 
-Cài backend training riêng (runtime OpenCV không phụ thuộc ML stack):
+Cài backend ML riêng (HSV-only runtime không phụ thuộc ML stack):
 
 ```powershell
 pip install -r requirements-training.txt
@@ -214,6 +214,30 @@ mapping và canonical `best`/`last` checkpoint đều được ghi vào metadata
 đã có local, training không cần discovery hoặc download dataset qua mạng. Seeded plan
 và backend hỗ trợ configuration/data reproducibility; không cam kết bitwise identical
 cho mọi GPU/kernel.
+
+## Learned inference boundary P10
+
+Runtime chọn backend một lần tại composition root. `HSVDetector` và
+`LearnedDetector` đều trả `list[Detection]`; tracker, color stabilizer, counter và sink
+không biết backend đang chạy. Learned adapter xác minh checkpoint metadata với
+experiment metadata, canonical P7 manifest snapshot và class names nhúng trong model
+trước inference.
+
+```json
+"detector": {
+  "backend": "learned",
+  "checkpoint": "outputs/experiments/p9_smoke_001/checkpoints/best.pt",
+  "metadata": "outputs/experiments/p9_smoke_001/checkpoints/checkpoint_metadata.json",
+  "device": "cpu",
+  "confidence_threshold": 0.25
+}
+```
+
+Ultralytics giữ quyền sở hữu preprocessing/NMS/letterbox reversal. Adapter chỉ
+nhận result đã trở về original-frame coordinates và chuyển `xyxy` sang
+canonical `(x, y, width, height)`. `Detection.confidence` là model score của frame
+hiện tại, không phải temporal vote confidence của P5. Checkpoint smoke P9
+không được xem là model production-ready.
 
 ## Known baseline limitation
 

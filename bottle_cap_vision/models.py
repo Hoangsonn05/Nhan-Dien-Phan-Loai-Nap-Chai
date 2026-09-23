@@ -13,15 +13,23 @@ import numpy as np
 
 @dataclass
 class Detection:
-    """One detector output in full-frame coordinates."""
+    """One backend-neutral detector output in full-frame coordinates.
+
+    ``confidence`` is a frame-local learned-model score.  It is deliberately
+    separate from the temporal vote confidence owned by ``ColorStabilizer``.
+    HSV-only shape/color evidence is optional because learned detectors cannot
+    provide those values without fabricating their semantics.
+    """
 
     color: str
     centroid: tuple[int, int]
     bbox: tuple[int, int, int, int]
-    area: float
-    circularity: float
-    solidity: float
-    color_ratio: float
+    area: float | None = None
+    circularity: float | None = None
+    solidity: float | None = None
+    color_ratio: float | None = None
+    class_id: int | None = None
+    confidence: float | None = None
 
 
 @dataclass

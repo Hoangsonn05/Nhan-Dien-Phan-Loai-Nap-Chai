@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List
+from typing import List, Protocol
 import cv2
 import numpy as np
 
@@ -11,6 +11,12 @@ from .models import Detection
 
 _DUPLICATE_IOU_THRESHOLD = 0.5
 _DUPLICATE_CONTAINMENT_THRESHOLD = 0.8
+
+
+class DetectorProtocol(Protocol):
+    """The only detector contract visible to the runtime core."""
+
+    def detect(self, frame: np.ndarray) -> list[Detection]: ...
 
 
 @dataclass(frozen=True)
@@ -204,3 +210,28 @@ class ColorCapDetector:
                 continue
             result.append(det)
         return result
+
+
+# Explicit backend name while preserving the established public class name.
+HSVDetector = ColorCapDetector
+
+
+def create_detector(config: AppConfig) -> DetectorProtocol:
+    """Resolve a detector once at the composition boundary."""
+    backend = config.detector.backend
+    if backend == "hsv":
+        return HSVDetector(config)
+    if backend == "learned":
+        if config.detector.checkpoint is None or config.detector.metadata is None:
+            raise ValueError("learned detector requires checkpoint and metadata paths")
+        # Lazy import keeps HSV-only runtime independent from the ML framework.
+        from .inference import LearnedDetector
+
+        return LearnedDetector(
+            checkpoint=config.detector.checkpoint,
+            metadata=config.detector.metadata,
+            device=config.detector.device,
+            confidence_threshold=config.detector.confidence_threshold,
+            runtime_class_names=[color.name for color in config.colors],
+        )
+    raise ValueError(f"Unsupported detector backend: {backend!r}")

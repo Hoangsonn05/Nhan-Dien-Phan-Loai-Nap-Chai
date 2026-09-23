@@ -1,4 +1,11 @@
 {
+  "detector": {
+    "backend": "hsv",
+    "checkpoint": null,
+    "metadata": null,
+    "device": "cpu",
+    "confidence_threshold": 0.25
+  },
   "roi": {
     "enabled": false,
     "x1": 0,
