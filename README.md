@@ -157,6 +157,40 @@ Bản này sửa ở hai tầng:
 
 Dataset thật là Roboflow YOLOv5 object detection tại `data/dataset/archive/`, với split vật lý `train`, `valid` và `test`. `valid` được canonical hóa thành `val`. `data.yaml` là source of truth cho class ID và tên class; Dataset Layer giữ nguyên tên lowercase và không alias ngầm sang tên runtime Title Case.
 
+### External candidate intake P13A-AUTO
+
+Nguồn ngoài luôn đi qua `data/external_staging/`; command này không ghi vào
+canonical dataset, không sửa P7 manifest và không auto-approve label:
+
+```powershell
+python scripts/stage_external_caps.py `
+  --source-type zip `
+  --source downloads/bottle_caps.zip `
+  --source-id bottle_caps_external_001 `
+  --output-root data/external_staging `
+  --canonical-dataset-root data/dataset/archive `
+  --target-classes yellow lilac
+```
+
+Hỗ trợ local ZIP/directory, danh sách URL ảnh và public web ZIP (`--allow-web`).
+Nếu nguồn web cần auth hoặc không tải được, CLI trả
+`SOURCE STATUS: REQUIRES MANUAL DOWNLOAD`; không bypass access control. Raw cache
+không bị overwrite. ZIP được kiểm tra path traversal trước khi extract.
+
+YOLO detection là annotation adapter hiện có. Class ID của nguồn chỉ được hiểu từ
+`data.yaml`/`classes.txt`, không bao giờ giả định bằng canonical ID. `yellow` và
+`lilac` là mapping `EXACT`; lavender/light purple chỉ vào hàng đợi ambiguous;
+purple/violet/magenta không tự map thành lilac. Generic bottle-cap bbox được crop
+và xếp hạng bằng HSV offline: bỏ pixel tối/xám/gần trắng, yellow dùng H=20..38,
+S>=70, V>=70; lilac dùng H=125..165, S>=30, V>=90; target ratio tối thiểu 0.35.
+`heuristic_score` là tỷ lệ pixel để sắp hàng review, không phải probability/model
+confidence. Mọi record mới bắt đầu ở `PENDING`.
+
+Review CSV/JSON, crops, contact sheets, duplicate/source-group/provenance reports
+nằm dưới staging root. Tên Roboflow dạng `.rf.<hash>` được gom theo stem nguồn;
+exact SHA-256 duplicate và cùng source group được báo riêng. Gợi ý train/val chạy
+trên source group; canonical test split không được dùng hoặc sửa.
+
 Audit strict và build manifest:
 
 ```powershell

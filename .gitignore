@@ -15,3 +15,4 @@ data/input/videos/*
 !data/input/videos/.gitkeep
 data/dataset/*
 !data/dataset/.gitkeep
+data/external_staging/
