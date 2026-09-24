@@ -1,5 +1,16 @@
 # BottleCapVision Python Base — P10 Learned Inference Boundary
 
+## Demo ảnh thực tế
+
+1. Chép ảnh vào `data/input/images/`.
+2. Chạy một lệnh: `python scripts/demo_images.py`.
+3. Cửa sổ mặc định hiển thị ảnh gốc và kết quả cạnh nhau. Dùng `M/Tab` để chuyển lần lượt qua `SIDE_BY_SIDE`, `RESULT_ONLY` (kết quả lớn hơn) và `ORIGINAL_ONLY`.
+4. Kết quả được lưu tại `outputs/practical_demo/`, gồm ảnh đã chú thích trong `annotated/`, `predictions.json`, `predictions.csv` và `summary.json`.
+
+Phím điều khiển: `A/Left` ảnh trước, `D/Right` ảnh tiếp theo, `M/Tab` đổi chế độ và `Q/Esc` thoát.
+
+Chạy không có GUI bằng `python scripts/demo_images.py --no-gui`. CSV có một dòng cho mỗi detection; ảnh không có detection vẫn được ghi rõ trong JSON và summary.
+
 Nền tảng software-only cho đồ án **nhận diện / phân biệt màu nắp chai**.
 
 ## Kiến trúc chính

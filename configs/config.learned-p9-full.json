@@ -1,0 +1,73 @@
+{
+  "detector": {
+    "backend": "learned",
+    "checkpoint": "outputs/experiments/p9_full_001/checkpoints/best.pt",
+    "metadata": "outputs/experiments/p9_full_001/checkpoints/checkpoint_metadata.json",
+    "device": "cpu",
+    "confidence_threshold": 0.25
+  },
+  "colors": [
+    {
+      "name": "Blue",
+      "hsv_ranges": [
+        {"lower": [90, 70, 50], "upper": [135, 255, 255]}
+      ]
+    },
+    {
+      "name": "Brown",
+      "hsv_ranges": [
+        {"lower": [5, 60, 35], "upper": [25, 255, 210]}
+      ]
+    },
+    {
+      "name": "Green",
+      "hsv_ranges": [
+        {"lower": [35, 60, 40], "upper": [85, 255, 255]}
+      ]
+    },
+    {
+      "name": "Lilac",
+      "hsv_ranges": [
+        {"lower": [130, 35, 50], "upper": [165, 255, 255]}
+      ]
+    },
+    {
+      "name": "Orange",
+      "hsv_ranges": [
+        {"lower": [5, 80, 60], "upper": [24, 255, 255]}
+      ]
+    },
+    {
+      "name": "Pink",
+      "hsv_ranges": [
+        {"lower": [155, 35, 60], "upper": [179, 255, 255]},
+        {"lower": [0, 35, 60], "upper": [8, 255, 255]}
+      ]
+    },
+    {
+      "name": "Purple",
+      "hsv_ranges": [
+        {"lower": [120, 45, 45], "upper": [150, 255, 255]}
+      ]
+    },
+    {
+      "name": "Red",
+      "hsv_ranges": [
+        {"lower": [0, 80, 50], "upper": [8, 255, 255]},
+        {"lower": [170, 80, 50], "upper": [179, 255, 255]}
+      ]
+    },
+    {
+      "name": "White",
+      "hsv_ranges": [
+        {"lower": [0, 0, 150], "upper": [179, 75, 255]}
+      ]
+    },
+    {
+      "name": "Yellow",
+      "hsv_ranges": [
+        {"lower": [20, 70, 60], "upper": [39, 255, 255]}
+      ]
+    }
+  ]
+}

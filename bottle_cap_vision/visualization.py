@@ -4,7 +4,87 @@ import cv2
 import numpy as np
 
 from .config import AppConfig
-from .models import FrameResult, Track
+from .models import Detection, FrameResult, Track
+
+
+_DETECTION_COLORS: dict[str, tuple[int, int, int]] = {
+    "blue": (235, 115, 25),
+    "brown": (45, 95, 150),
+    "green": (65, 195, 85),
+    "lilac": (220, 155, 220),
+    "orange": (20, 145, 250),
+    "pink": (190, 125, 250),
+    "purple": (185, 75, 180),
+    "red": (55, 55, 235),
+    "white": (235, 235, 235),
+    "yellow": (35, 210, 245),
+}
+_FALLBACK_COLORS = tuple(_DETECTION_COLORS.values())
+
+
+def _detection_color(class_name: str) -> tuple[int, int, int]:
+    normalized = class_name.strip().casefold()
+    if normalized in _DETECTION_COLORS:
+        return _DETECTION_COLORS[normalized]
+    palette_index = sum(normalized.encode("utf-8")) % len(_FALLBACK_COLORS)
+    return _FALLBACK_COLORS[palette_index]
+
+
+def _contrasting_text_color(background: tuple[int, int, int]) -> tuple[int, int, int]:
+    blue, green, red = background
+    luminance = 0.114 * blue + 0.587 * green + 0.299 * red
+    return (20, 20, 20) if luminance >= 150 else (255, 255, 255)
+
+
+def annotate_detections(frame: np.ndarray, detections: list[Detection]) -> np.ndarray:
+    """Return a frame-local detection view without tracker/counting semantics."""
+    annotated = frame.copy()
+    image_height, image_width = annotated.shape[:2]
+    box_thickness = max(2, min(4, round(min(image_height, image_width) / 400)))
+    font_scale = 0.68
+    text_thickness = 2
+    padding = 4
+    for detection in detections:
+        x, y, width, height = detection.bbox
+        box_color = _detection_color(detection.color)
+        cv2.rectangle(
+            annotated,
+            (x, y),
+            (x + width, y + height),
+            box_color,
+            box_thickness,
+        )
+        label = detection.color
+        if detection.confidence is not None:
+            label = f"{label} {detection.confidence:.0%}"
+
+        (text_width, text_height), baseline = cv2.getTextSize(
+            label, cv2.FONT_HERSHEY_SIMPLEX, font_scale, text_thickness
+        )
+        label_width = text_width + 2 * padding
+        label_height = text_height + baseline + 2 * padding
+        label_x = max(0, min(x, image_width - label_width))
+        label_y = y - label_height if y >= label_height else max(0, min(y, image_height - label_height))
+        label_right = min(image_width - 1, label_x + label_width)
+        label_bottom = min(image_height - 1, label_y + label_height)
+        cv2.rectangle(
+            annotated,
+            (label_x, label_y),
+            (label_right, label_bottom),
+            box_color,
+            -1,
+        )
+        cv2.putText(
+            annotated,
+            label,
+            (label_x + padding, min(label_bottom - baseline - padding, label_y + padding + text_height)),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            font_scale,
+            _contrasting_text_color(box_color),
+            text_thickness,
+            cv2.LINE_AA,
+        )
+    return annotated
 
 
 def draw_line(frame: np.ndarray, cfg: AppConfig) -> None:
