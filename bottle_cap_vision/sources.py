@@ -97,3 +97,63 @@ class VideoSource:
             self._capture.release()
             self._capture = None
         self._expected_frames = None
+
+
+class CameraSource:
+    """Synchronous OpenCV camera source with explicit ownership."""
+
+    def __init__(self, camera_index: int = 0):
+        self.camera_index = camera_index
+        self._capture = None
+        self.metadata = SourceMetadata()
+
+    def open(self) -> None:
+        capture = cv2.VideoCapture(self.camera_index)
+        if not capture.isOpened():
+            capture.release()
+            raise RuntimeError(f"Cannot open camera index {self.camera_index}")
+
+        try:
+            width_value = float(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height_value = float(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            fps_value = float(capture.get(cv2.CAP_PROP_FPS))
+        except BaseException:
+            capture.release()
+            raise
+
+        width = int(width_value) if math.isfinite(width_value) else 0
+        height = int(height_value) if math.isfinite(height_value) else 0
+        if width <= 0 or height <= 0:
+            capture.release()
+            raise RuntimeError(
+                f"Camera index {self.camera_index} has invalid dimensions "
+                f"({width}x{height})"
+            )
+
+        fps = fps_value if math.isfinite(fps_value) and fps_value > 0 else None
+        self._capture = capture
+        self.metadata = SourceMetadata(fps=fps, width=width, height=height)
+
+    def __iter__(self) -> Iterator[FramePacket]:
+        if self._capture is None:
+            raise RuntimeError("CameraSource must be opened before iteration")
+        frame_index = 0
+        while True:
+            ok, frame = self._capture.read()
+            if not ok:
+                raise RuntimeError(
+                    f"Camera read failed at frame index {frame_index} "
+                    f"(camera index {self.camera_index})"
+                )
+            if frame is None or frame.size == 0:
+                raise RuntimeError(
+                    f"Camera returned an empty frame at index {frame_index} "
+                    f"(camera index {self.camera_index})"
+                )
+            yield FramePacket(frame=frame, frame_index=frame_index)
+            frame_index += 1
+
+    def close(self) -> None:
+        if self._capture is not None:
+            self._capture.release()
+            self._capture = None

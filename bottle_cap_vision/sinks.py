@@ -5,6 +5,7 @@ from dataclasses import asdict
 import json
 import math
 from pathlib import Path
+from time import perf_counter
 from typing import TextIO
 
 import cv2
@@ -85,25 +86,54 @@ class VideoSink:
 class DisplaySink:
     """Display annotated frames and translate q/ESC into a stop request."""
 
-    def __init__(self, config: AppConfig, window_name: str = "Bottle Cap Vision - Python/OpenCV"):
+    def __init__(
+        self,
+        config: AppConfig,
+        window_name: str = "Bottle Cap Vision - Python/OpenCV",
+        *,
+        synchronize_to_source_fps: bool = False,
+    ):
         self.config = config
         self.window_name = window_name
+        self.synchronize_to_source_fps = synchronize_to_source_fps
+        self.source_fps: float | None = None
         self._window_created = False
+        self._frame_period: float | None = None
+        self._cycle_started_at: float | None = None
 
     def open(self, metadata: SourceMetadata) -> None:
-        pass
+        fps = metadata.fps
+        self.source_fps = fps if fps is not None and math.isfinite(fps) and fps > 0 else None
+        if self.synchronize_to_source_fps and self.source_fps is not None:
+            self._frame_period = 1.0 / self.source_fps
+            self._cycle_started_at = perf_counter()
+        else:
+            self._frame_period = None
+            self._cycle_started_at = None
 
     def write(self, packet: FramePacket, result: FrameResult, metrics: RuntimeMetrics) -> bool:
         annotated = annotate_frame(packet.frame, result, self.config, metrics.processing_fps)
         cv2.imshow(self.window_name, annotated)
         self._window_created = True
-        key = cv2.waitKey(1) & 0xFF
-        return key not in (27, ord("q"))
+        delay_ms = 1
+        if self._frame_period is not None and self._cycle_started_at is not None:
+            remaining = self._frame_period - (perf_counter() - self._cycle_started_at)
+            if remaining > 0:
+                # OpenCV keeps its event loop responsive while waiting.  The
+                # epsilon prevents exact millisecond budgets such as 30 ms
+                # from becoming 31 ms due to floating-point representation.
+                delay_ms = max(1, math.ceil(remaining * 1000.0 - 1e-9))
+        key = cv2.waitKey(delay_ms) & 0xFF
+        if self._frame_period is not None:
+            self._cycle_started_at = perf_counter()
+        return key not in (27, ord("q"), ord("Q"))
 
     def close(self, summary: RunSummary | None = None) -> None:
         if self._window_created:
             cv2.destroyWindow(self.window_name)
             self._window_created = False
+        self._frame_period = None
+        self._cycle_started_at = None
 
 
 class CsvSink:

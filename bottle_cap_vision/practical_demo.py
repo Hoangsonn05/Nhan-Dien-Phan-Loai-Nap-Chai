@@ -90,7 +90,7 @@ def _resolve_project_path(value: str) -> Path:
     return path.resolve() if path.is_absolute() else (PROJECT_ROOT / path).resolve()
 
 
-def _load_learned_config(config_path: str | Path) -> tuple[AppConfig, Path, Path, Path]:
+def load_learned_config(config_path: str | Path) -> tuple[AppConfig, Path, Path, Path]:
     resolved_config = Path(config_path).resolve()
     if not resolved_config.is_file():
         raise PracticalDemoError(f"Config file does not exist: {resolved_config}")
@@ -182,7 +182,7 @@ def process_images(
     """Process independent images with one learned detector instance."""
     input_root = Path(input_dir).resolve()
     images = discover_images(input_root, recursive=recursive)
-    config, resolved_config, checkpoint, _metadata = _load_learned_config(config_path)
+    config, resolved_config, checkpoint, _metadata = load_learned_config(config_path)
     factory = detector_factory or create_detector
     print(f"Loading full learned model: {checkpoint}")
     try:

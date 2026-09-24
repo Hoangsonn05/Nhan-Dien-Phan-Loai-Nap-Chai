@@ -11,12 +11,55 @@ Phím điều khiển: `A/Left` ảnh trước, `D/Right` ảnh tiếp theo, `M/
 
 Chạy không có GUI bằng `python scripts/demo_images.py --no-gui`. CSV có một dòng cho mỗi detection; ảnh không có detection vẫn được ghi rõ trong JSON và summary.
 
+## Demo camera thực tế
+
+Chạy camera mặc định (camera index 0) với full learned model:
+
+```powershell
+python scripts/demo_camera.py
+```
+
+Chọn camera hoặc giới hạn số frame để kiểm tra:
+
+```powershell
+python scripts/demo_camera.py --camera-index 1 --max-frames 100
+```
+
+Camera dùng `configs/config.learned-p9-full.json`, chạy tuần tự qua cùng
+`BottleCapPipeline` và hiển thị processing FPS thực. Nhấn `Q` hoặc `Esc` để
+thoát; runner sẽ đóng cửa sổ và release camera. Có thể override config bằng
+`--config <path>`; lỗi checkpoint/model không fallback sang HSV.
+
+## Demo video thực tế
+
+Phát một file video trên GUI bằng full learned model:
+
+```powershell
+python scripts/demo_video.py data/input/videos/sample.mp4
+```
+
+Có thể override config hoặc giới hạn số frame để kiểm tra:
+
+```powershell
+python scripts/demo_video.py data/input/videos/sample.mp4 `
+  --config configs/config.learned-p9-full.json `
+  --max-frames 100
+```
+
+Mỗi frame đi tuần tự qua cùng `BottleCapPipeline`; detector, tracker,
+stabilizer và counter được tạo một lần cho toàn video. GUI dùng FPS metadata
+của nguồn để chờ phần frame budget còn lại, không drop frame và không sleep
+thêm khi inference đã chậm hơn video. Nếu FPS metadata không hợp lệ, chương
+trình hiển thị `Source FPS: N/A` và chạy theo tốc độ xử lý thay vì tự giả 30 FPS.
+Nhấn `Q` hoặc `Esc` để dừng sạch. `average_processing_fps` trong summary là tốc
+độ inference thực, không phải FPS của file video.
+
 Nền tảng software-only cho đồ án **nhận diện / phân biệt màu nắp chai**.
 
 ## Kiến trúc chính
 
 ```text
-ImageSource / VideoSource
+ImageSource / VideoSource / CameraSource
     -> FramePacket
     -> BottleCapPipeline (in-memory vision core)
        -> detection -> tracking -> counting -> FrameResult
