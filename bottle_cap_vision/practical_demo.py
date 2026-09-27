@@ -19,6 +19,9 @@ from .visualization import annotate_detections
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_INPUT_DIR = PROJECT_ROOT / "data" / "input" / "images"
+DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "outputs" / "practical_demo"
+DEFAULT_CONFIG = PROJECT_ROOT / "configs" / "config.learned-p9-full.json"
 SUPPORTED_IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".bmp", ".webp", ".tif", ".tiff"}
 WINDOW_TITLE = "BottleCapVision - Practical Image Test"
 DISPLAY_MAX_WIDTH = 1800
@@ -475,3 +478,26 @@ def print_summary(report: DemoReport) -> None:
     for color, count in summary["detections_by_color"].items():
         print(f"{color}: {count}")
     print(f"\nResults: {report.output_dir}")
+
+
+def run_image(
+    input_dir: str | Path = DEFAULT_INPUT_DIR,
+    *,
+    output_dir: str | Path = DEFAULT_OUTPUT_DIR,
+    config_path: str | Path = DEFAULT_CONFIG,
+    show_gui: bool = True,
+    recursive: bool = False,
+    detector_factory: Callable[[AppConfig], Detector] | None = None,
+) -> DemoReport:
+    """Run the existing independent-image practical composition."""
+    report = process_images(
+        input_dir,
+        output_dir,
+        config_path,
+        recursive=recursive,
+        detector_factory=detector_factory,
+    )
+    print_summary(report)
+    if show_gui:
+        show_results(report.processed_images)
+    return report

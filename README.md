@@ -1,5 +1,19 @@
 # BottleCapVision Python Base — P10 Learned Inference Boundary
 
+## Practical Demo thống nhất
+
+Chạy launcher terminal cho cả ba chế độ thực hành:
+
+```powershell
+python scripts/run_practical.py
+```
+
+Menu gồm `1 — Image`, `2 — Camera`, `3 — Video`, `0 — Exit`. Launcher dùng chung
+`configs/config.learned-p9-full.json`; có thể đổi bằng `--config <path>`. Sau khi
+đóng cửa sổ ảnh/camera/video bằng `Q` hoặc `Esc` (hoặc video chạy hết), chương
+trình quay lại menu. Các lệnh standalone bên dưới vẫn được giữ để test và debug
+từng chế độ.
+
 ## Demo ảnh thực tế
 
 1. Chép ảnh vào `data/input/images/`.
