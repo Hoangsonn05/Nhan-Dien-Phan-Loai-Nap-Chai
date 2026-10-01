@@ -1,5 +1,16 @@
 # Changelog
 
+## COURSE1-FINAL — 2026-10-01
+
+- Chốt learned model bundle ổn định tại `models/p9_full_001` cho hai workflow chính thức Image và Video.
+- Chấp nhận practical Image cùng output ảnh chú thích, JSON, CSV và summary.
+- Chấp nhận canonical Video 120 frame với 8 vật thể và final crossing count bằng 8.
+- Hoàn thiện boundary Source → Core → Sink, tracking/counting và color stabilization theo track.
+- Sửa cross-class duplicate bằng class-agnostic NMS; số frame duplicate giảm từ 34 xuống 0 và count giảm từ 9 về đúng 8.
+- Giữ camera implementation nhưng đóng băng phát triển; chất lượng nhận diện camera thực được deferred vì thiếu target-domain coverage.
+- Dọn cache/diagnostic residue và chuẩn hóa production dependency, tài liệu cùng release status.
+- Production model, canonical video và demo image vẫn untracked; phải được đưa rõ vào submission archive trước khi phát hành.
+
 ## Unreleased — P10 Learned inference boundary
 
 - Thêm detector protocol/factory và dependency injection để HSV/learned cùng trả canonical `Detection[]` mà không rẽ nhánh downstream.

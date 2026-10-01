@@ -3,6 +3,8 @@ venv/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.coverage
+htmlcov/
 .idea/
 .vscode/
 .DS_Store
@@ -11,8 +13,10 @@ outputs/*
 !outputs/.gitkeep
 data/input/images/*
 !data/input/images/.gitkeep
+!data/input/images/WIN_20210818_16_10_24_Pro_jpg.rf.3271fd13498c23c5b267bf05368d1ecd.jpg
 data/input/videos/*
 !data/input/videos/.gitkeep
+!data/input/videos/bottle_cap_conveyor_v2.mp4
 data/dataset/*
 !data/dataset/.gitkeep
 data/external_staging/

@@ -362,9 +362,10 @@ def test_default_full_config_uses_full_p9_checkpoint_and_cpu():
     config = load_config(ROOT / "configs" / "config.learned-p9-full.json")
 
     assert config.detector.backend == "learned"
-    assert "p9_full_001" in config.detector.checkpoint
-    assert "p9_smoke_001" not in config.detector.checkpoint
-    assert "p9_full_001" in config.detector.metadata
+    assert config.detector.checkpoint == "models/p9_full_001/checkpoints/best.pt"
+    assert config.detector.metadata == (
+        "models/p9_full_001/checkpoints/checkpoint_metadata.json"
+    )
     assert config.detector.device == "cpu"
     assert config.detector.confidence_threshold == 0.25
 

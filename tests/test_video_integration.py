@@ -227,7 +227,7 @@ def test_learned_checkpoint_runs_sequential_frames_through_same_runtime(
     tmp_path: Path,
 ):
     root = Path(__file__).resolve().parents[1]
-    checkpoint_dir = root / "outputs" / "experiments" / "p9_smoke_001" / "checkpoints"
+    checkpoint_dir = root / "models" / "p9_full_001" / "checkpoints"
     cfg = AppConfig.default()
     cfg.detector.backend = "learned"
     cfg.detector.checkpoint = str(checkpoint_dir / "best.pt")

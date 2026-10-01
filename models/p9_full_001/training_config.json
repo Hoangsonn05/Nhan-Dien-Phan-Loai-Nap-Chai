@@ -1,0 +1,15 @@
+{
+  "batch_size": 8,
+  "device": "cpu",
+  "epochs": 50,
+  "experiment_name": "p9_full_001",
+  "image_size": 320,
+  "learning_rate": null,
+  "low_support_threshold": 5,
+  "model": "yolo11n.pt",
+  "output_root": "outputs/experiments",
+  "seed": 42,
+  "train_sample_limit": null,
+  "val_sample_limit": null,
+  "workers": 0
+}

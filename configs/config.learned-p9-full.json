@@ -1,8 +1,8 @@
 {
   "detector": {
     "backend": "learned",
-    "checkpoint": "outputs/experiments/p9_full_001/checkpoints/best.pt",
-    "metadata": "outputs/experiments/p9_full_001/checkpoints/checkpoint_metadata.json",
+    "checkpoint": "models/p9_full_001/checkpoints/best.pt",
+    "metadata": "models/p9_full_001/checkpoints/checkpoint_metadata.json",
     "device": "cpu",
     "confidence_threshold": 0.25
   },

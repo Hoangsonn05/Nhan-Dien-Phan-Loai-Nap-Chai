@@ -1,0 +1,198 @@
+{
+  "backend": {
+    "model_identifier": "yolo11n.pt",
+    "name": "ultralytics",
+    "version": "8.4.160"
+  },
+  "backend_training": {
+    "best_selection_rule": "Ultralytics validation fitness",
+    "effective_arguments": {
+      "batch": 8,
+      "data": "D:\\MMO\\THNDTCN\\Cuối kỳ\\outputs\\experiments\\p9_full_001\\dataset_view\\data.yaml",
+      "deterministic": true,
+      "device": "cpu",
+      "epochs": 50,
+      "exist_ok": false,
+      "imgsz": 320,
+      "name": "train",
+      "plots": false,
+      "project": "D:\\MMO\\THNDTCN\\Cuối kỳ\\outputs\\experiments\\p9_full_001\\backend",
+      "seed": 42,
+      "verbose": true,
+      "workers": 0
+    },
+    "effective_arguments_reference": "backend/train/args.yaml",
+    "metrics_references": [
+      "results.csv"
+    ],
+    "output_dir": "backend/train",
+    "telemetry_is_not_p8_evaluation": true
+  },
+  "checkpoints": {
+    "best": "checkpoints/best.pt",
+    "last": "checkpoints/last.pt",
+    "metadata": "checkpoints/checkpoint_metadata.json"
+  },
+  "completed_at": "2026-09-24T10:12:48.399429+00:00",
+  "created_at": "2026-09-24T08:47:10.009763+00:00",
+  "dataset": {
+    "annotation_format": "yolo_bbox_normalized",
+    "class_mapping": [
+      {
+        "class_id": 0,
+        "class_name": "blue"
+      },
+      {
+        "class_id": 1,
+        "class_name": "brown"
+      },
+      {
+        "class_id": 2,
+        "class_name": "green"
+      },
+      {
+        "class_id": 3,
+        "class_name": "lilac"
+      },
+      {
+        "class_id": 4,
+        "class_name": "orange"
+      },
+      {
+        "class_id": 5,
+        "class_name": "pink"
+      },
+      {
+        "class_id": 6,
+        "class_name": "purple"
+      },
+      {
+        "class_id": 7,
+        "class_name": "red"
+      },
+      {
+        "class_id": 8,
+        "class_name": "white"
+      },
+      {
+        "class_id": 9,
+        "class_name": "yellow"
+      }
+    ],
+    "manifest_fingerprint": "77a5489d41ef7312e2cde0a31b962696c19d9ac8f962d5fbd71a905c0d77dbc0",
+    "manifest_reference": "outputs\\dataset_manifest.json",
+    "manifest_schema_version": "1.0",
+    "manifest_snapshot": "dataset_manifest.json",
+    "per_class_support": [
+      {
+        "class_id": 0,
+        "class_name": "blue",
+        "train": 9342,
+        "val": 892
+      },
+      {
+        "class_id": 1,
+        "class_name": "brown",
+        "train": 2772,
+        "val": 251
+      },
+      {
+        "class_id": 2,
+        "class_name": "green",
+        "train": 7617,
+        "val": 643
+      },
+      {
+        "class_id": 3,
+        "class_name": "lilac",
+        "train": 0,
+        "val": 0
+      },
+      {
+        "class_id": 4,
+        "class_name": "orange",
+        "train": 8706,
+        "val": 811
+      },
+      {
+        "class_id": 5,
+        "class_name": "pink",
+        "train": 1392,
+        "val": 129
+      },
+      {
+        "class_id": 6,
+        "class_name": "purple",
+        "train": 4002,
+        "val": 366
+      },
+      {
+        "class_id": 7,
+        "class_name": "red",
+        "train": 5535,
+        "val": 509
+      },
+      {
+        "class_id": 8,
+        "class_name": "white",
+        "train": 4971,
+        "val": 468
+      },
+      {
+        "class_id": 9,
+        "class_name": "yellow",
+        "train": 6,
+        "val": 2
+      }
+    ],
+    "selected_train_sample_count": 2103,
+    "selected_val_sample_count": 200,
+    "test_split_usage": "excluded",
+    "train_sample_count": 2103,
+    "val_sample_count": 200
+  },
+  "duration_seconds": 5138.388627800043,
+  "experiment_id": "p9_full_001",
+  "preflight_issues": [
+    {
+      "class_id": 3,
+      "class_name": "lilac",
+      "code": "zero_train_support",
+      "message": "model has no supervised train examples for class lilac",
+      "severity": "HIGH"
+    }
+  ],
+  "project_version": "P9",
+  "reproducibility": {
+    "cuda_available": false,
+    "cuda_version": null,
+    "determinism_mode": "deterministic data plan and seeded backend; bitwise GPU reproducibility not guaranteed",
+    "python_version": "3.14.7",
+    "requested_device": "cpu",
+    "resolved_device": "cpu",
+    "seed": 42,
+    "torch_version": "2.14.0+cpu"
+  },
+  "smoke_checkpoint_not_final_model": false,
+  "status": "completed",
+  "termination": {
+    "epochs_completed": 50,
+    "status": "completed"
+  },
+  "training_config": {
+    "batch_size": 8,
+    "device": "cpu",
+    "epochs": 50,
+    "experiment_name": "p9_full_001",
+    "image_size": 320,
+    "learning_rate": null,
+    "low_support_threshold": 5,
+    "model": "yolo11n.pt",
+    "output_root": "outputs/experiments",
+    "seed": 42,
+    "train_sample_limit": null,
+    "val_sample_limit": null,
+    "workers": 0
+  },
+  "training_schema_version": "1.0"
+}

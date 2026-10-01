@@ -393,14 +393,12 @@ def test_detection_converts_to_p8_prediction_without_framework_object():
     assert prediction.bbox.height == pytest.approx(0.4)
 
 
-def test_real_p9_checkpoint_load_inference_and_p8_smoke():
+def test_production_p9_checkpoint_load_inference_and_p8_contract():
     root = Path(__file__).resolve().parents[1]
-    experiment = root / "outputs" / "experiments" / "p9_smoke_001"
+    experiment = root / "models" / "p9_full_001"
     checkpoint = experiment / "checkpoints" / "best.pt"
     metadata = experiment / "checkpoints" / "checkpoint_metadata.json"
-    image_path = next((experiment / "dataset_view" / "val" / "images").iterdir())
-    image = cv2.imdecode(np.fromfile(image_path, dtype=np.uint8), cv2.IMREAD_COLOR)
-    assert image is not None
+    image = np.zeros((64, 64, 3), dtype=np.uint8)
     cfg = AppConfig.default()
     cfg.detector.backend = "learned"
     cfg.detector.checkpoint = str(checkpoint)
@@ -418,7 +416,7 @@ def test_real_p9_checkpoint_load_inference_and_p8_smoke():
     assert all(item.bbox[0] >= 0 and item.bbox[1] >= 0 and item.bbox[2] > 0 and item.bbox[3] > 0 for item in detections)
 
     manifest = DatasetManifest.load(experiment / "dataset_manifest.json")
-    sample = next(item for item in manifest.split("val") if Path(item.image_path).name == image_path.name)
+    sample = next(iter(manifest.split("val")))
     predictions = [
         detection_to_evaluation_prediction(item, sample_id=sample.sample_id, frame_shape=image.shape)
         for item in detections

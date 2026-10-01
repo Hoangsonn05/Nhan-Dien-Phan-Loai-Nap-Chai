@@ -1,0 +1,59 @@
+{
+  "backend": {
+    "model_identifier": "yolo11n.pt",
+    "name": "ultralytics",
+    "version": "8.4.160"
+  },
+  "best_checkpoint": "best.pt",
+  "best_selection_rule": "Ultralytics validation fitness",
+  "class_mapping": [
+    {
+      "class_id": 0,
+      "class_name": "blue"
+    },
+    {
+      "class_id": 1,
+      "class_name": "brown"
+    },
+    {
+      "class_id": 2,
+      "class_name": "green"
+    },
+    {
+      "class_id": 3,
+      "class_name": "lilac"
+    },
+    {
+      "class_id": 4,
+      "class_name": "orange"
+    },
+    {
+      "class_id": 5,
+      "class_name": "pink"
+    },
+    {
+      "class_id": 6,
+      "class_name": "purple"
+    },
+    {
+      "class_id": 7,
+      "class_name": "red"
+    },
+    {
+      "class_id": 8,
+      "class_name": "white"
+    },
+    {
+      "class_id": 9,
+      "class_name": "yellow"
+    }
+  ],
+  "dataset_fingerprint": "77a5489d41ef7312e2cde0a31b962696c19d9ac8f962d5fbd71a905c0d77dbc0",
+  "experiment_id": "p9_full_001",
+  "experiment_metadata": "../experiment_metadata.json",
+  "image_size": 320,
+  "last_checkpoint": "last.pt",
+  "smoke_checkpoint_not_final_model": false,
+  "training_config": "../training_config.json",
+  "training_schema_version": "1.0"
+}
