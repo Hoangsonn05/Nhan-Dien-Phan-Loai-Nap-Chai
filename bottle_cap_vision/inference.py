@@ -451,6 +451,7 @@ class LearnedDetector:
                     imgsz=self.metadata.image_size,
                     device=self.device,
                     conf=self.confidence_threshold,
+                    agnostic_nms=True,
                     verbose=False,
                 )
         except InferenceContractError:

@@ -66,9 +66,11 @@ class FakeModel:
         self.model = FakeInnerModel()
         self.results = results
         self.predict_calls = 0
+        self.predict_requests = []
 
     def predict(self, *, source, **kwargs):
         self.predict_calls += 1
+        self.predict_requests.append((source, kwargs))
         if self.results is not None:
             return self.results
         return [_result(source.shape[:2], [], [], [])]
@@ -215,11 +217,26 @@ def test_model_is_loaded_once_for_multiple_frames(artifact):
         model_loader=lambda path: calls.append(path) or model,
     )
 
-    detector.detect(np.zeros((20, 30, 3), dtype=np.uint8))
-    detector.detect(np.zeros((20, 30, 3), dtype=np.uint8))
+    first_frame = np.zeros((20, 30, 3), dtype=np.uint8)
+    second_frame = np.ones((20, 30, 3), dtype=np.uint8)
+    detector.detect(first_frame)
+    detector.detect(second_frame)
 
     assert calls == [str(artifact.checkpoint.resolve())]
     assert model.predict_calls == 2
+    assert model.predict_requests[0][0] is first_frame
+    assert model.predict_requests[1][0] is second_frame
+    assert all(
+        request[1]
+        == {
+            "imgsz": 160,
+            "device": "cpu",
+            "conf": 0.25,
+            "agnostic_nms": True,
+            "verbose": False,
+        }
+        for request in model.predict_requests
+    )
     assert model.model.eval_calls == 1
 
 
